@@ -1,0 +1,68 @@
+---
+import AuthNav from './react/AuthNav.tsx';
+import LangToggle from './react/LangToggle.tsx';
+import { Hexagon } from 'lucide-astro';
+
+const links = [
+  { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো' },
+  { href: '/#create', en: 'Create', bn: 'বানাও' },
+  { href: '/specs', en: 'Specs', bn: 'স্পেক' },
+  { href: '/shop', en: 'Shop', bn: 'কেনাকাটা' },
+  { href: '/blog', en: 'Blog', bn: 'ব্লগ' },
+];
+const path = Astro.url.pathname;
+// Active when the link points at the current page. In-page anchors (e.g.
+// "/#why") are navigation within the home page, not a separate "page", so they
+// never take the active state. Real pages ("/specs", "/blog") also light up on
+// their sub-pages ("/blog/post").
+function isActive(href: string) {
+  if (href.includes('#')) return false;
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
+}
+---
+
+<header
+  class="sticky top-0 z-50 border-b border-black/5 bg-paper/85 backdrop-blur"
+>
+  <nav class="container-page flex h-16 items-center justify-between gap-6">
+    <a
+      href="/"
+      class="flex shrink-0 items-center gap-2.5 font-extrabold text-ink"
+    >
+      <span
+        class="grid h-9 w-9 place-items-center rounded-md bg-brand-600 text-white"
+        aria-hidden="true"
+      >
+        <Hexagon size={18} strokeWidth={2.5} />
+      </span>
+      <span class="text-lg leading-none tracking-tight">Bitsflow</span>
+    </a>
+
+    <ul class="hidden items-center gap-1 md:flex">
+      {
+        links.map((l) => (
+          <li>
+            <a
+              href={l.href}
+              aria-current={isActive(l.href) ? 'page' : undefined}
+              class:list={[
+                'inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors',
+                isActive(l.href)
+                  ? 'text-brand-700'
+                  : 'text-ink-soft hover:text-brand-700',
+              ]}
+            >
+              <span class="lang-en">{l.en}</span><span class="lang-bn" lang="bn">{l.bn}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="flex shrink-0 items-center gap-2.5">
+      <LangToggle client:load />
+      <AuthNav client:load />
+    </div>
+  </nav>
+</header>

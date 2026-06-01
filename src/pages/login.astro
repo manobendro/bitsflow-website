@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthForm from '../components/react/AuthForm.tsx';
+---
+
+<BaseLayout title="Sign in — Bitsflow" description="Sign in or create your Bitsflow account.">
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -right-24 top-0 -z-10 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="container-page grid place-items-center py-16 lg:py-24">
+      <AuthForm client:load />
+    </div>
+  </section>
+</BaseLayout>

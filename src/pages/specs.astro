@@ -1,0 +1,301 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import T from '../components/T.astro';
+import { formatBDT } from '../lib/format';
+import {
+  LayoutGrid,
+  Wifi,
+  Compass,
+  CircleDot,
+  Cable,
+  Blocks,
+  BatteryFull,
+  Ruler,
+  ArrowLeft,
+  Package,
+  Info,
+} from 'lucide-astro';
+
+const launchPrice = 4500; // keep in sync with shop/home
+
+// Grouped technical specifications. Edit freely as hardware is finalized.
+// Each row is [label EN, label BN, value EN, value BN]. Universal technical
+// tokens (protocol names, USB-C, etc.) are intentionally left identical.
+const specGroups = [
+  {
+    title: 'Display',
+    titleBn: 'ডিসপ্লে',
+    Icon: LayoutGrid,
+    rows: [
+      [
+        'Matrix',
+        'ম্যাট্রিক্স',
+        '5×5 full-color RGB LED matrix (25 addressable LEDs)',
+        '৫×৫ ফুল-কালার RGB LED ম্যাট্রিক্স (২৫টি আলাদাভাবে নিয়ন্ত্রণযোগ্য LED)',
+      ],
+      [
+        'Brightness',
+        'উজ্জ্বলতা',
+        'Per-pixel brightness control, software dimmable',
+        'প্রতিটি পিক্সেলের উজ্জ্বলতা আলাদা নিয়ন্ত্রণ, সফটওয়্যার দিয়ে কম-বেশি',
+      ],
+      [
+        'Output',
+        'আউটপুট',
+        'Scrolling text, animation, pixel art, sensor visualisation',
+        'স্ক্রলিং টেক্সট, অ্যানিমেশন, পিক্সেল আর্ট, সেন্সরের ডেটা দেখানো',
+      ],
+    ],
+  },
+  {
+    title: 'Wireless',
+    titleBn: 'ওয়্যারলেস',
+    Icon: Wifi,
+    rows: [
+      ['Bluetooth', 'ব্লুটুথ', 'Bluetooth Low Energy (BLE) 5.x', 'Bluetooth Low Energy (BLE) 5.x'],
+      ['Wi-Fi', 'Wi-Fi', '2.4 GHz 802.11 b/g/n', '2.4 GHz 802.11 b/g/n'],
+      [
+        'Radio',
+        'রেডিও',
+        'Board-to-board radio messaging',
+        'এক বোর্ড থেকে আরেক বোর্ডে রেডিও মেসেজিং',
+      ],
+    ],
+  },
+  {
+    title: 'Sensors',
+    titleBn: 'সেন্সর',
+    Icon: Compass,
+    rows: [
+      ['Motion', 'মোশন', '3-axis accelerometer', '৩-অক্ষের অ্যাক্সিলারোমিটার'],
+      [
+        'Orientation',
+        'অরিয়েন্টেশন',
+        'Magnetometer / digital compass',
+        'ম্যাগনেটোমিটার / ডিজিটাল কম্পাস',
+      ],
+      [
+        'Environment',
+        'পরিবেশ',
+        'Temperature sensor, ambient light sensing',
+        'তাপমাত্রার সেন্সর, চারপাশের আলো মাপা',
+      ],
+    ],
+  },
+  {
+    title: 'Input & interaction',
+    titleBn: 'ইনপুট ও ইন্টারঅ্যাকশন',
+    Icon: CircleDot,
+    rows: [
+      ['Buttons', 'বাটন', '2 programmable push buttons', '২টি প্রোগ্রামেবল পুশ বাটন'],
+      ['Touch', 'টাচ', 'Capacitive touch logo / pads', 'ক্যাপাসিটিভ টাচ লোগো / প্যাড'],
+      ['Feedback', 'ফিডব্যাক', 'On-board indicators', 'বোর্ডেই ইনডিকেটর'],
+    ],
+  },
+  {
+    title: 'Connectivity & expansion',
+    titleBn: 'কানেক্টিভিটি ও এক্সপ্যানশন',
+    Icon: Cable,
+    rows: [
+      [
+        'USB',
+        'USB',
+        'USB-C for power, programming and data',
+        'পাওয়ার, প্রোগ্রামিং আর ডেটা — সবই USB-C দিয়ে',
+      ],
+      [
+        'GPIO',
+        'GPIO',
+        'GPIO header for sensors, motors and add-ons',
+        'সেন্সর, মোটর আর অ্যাড-অনের জন্য GPIO হেডার',
+      ],
+      ['Buses', 'বাস', 'I²C, SPI and UART', 'I²C, SPI ও UART'],
+    ],
+  },
+  {
+    title: 'Programming',
+    titleBn: 'প্রোগ্রামিং',
+    Icon: Blocks,
+    rows: [
+      ['Beginner', 'নতুনদের জন্য', 'Browser-based block editor', 'ব্রাউজারেই ব্লক এডিটর'],
+      ['Text', 'টেক্সট', 'MicroPython', 'MicroPython'],
+      ['Advanced', 'অ্যাডভান্সড', 'JavaScript', 'JavaScript'],
+    ],
+  },
+  {
+    title: 'Power',
+    titleBn: 'পাওয়ার',
+    Icon: BatteryFull,
+    rows: [
+      ['USB', 'USB', '5V via USB-C', '৫V, USB-C দিয়ে'],
+      [
+        'Battery',
+        'ব্যাটারি',
+        'External battery connector for portable projects',
+        'পোর্টেবল প্রজেক্টের জন্য আলাদা ব্যাটারি কানেক্টর',
+      ],
+    ],
+  },
+  {
+    title: 'Physical',
+    titleBn: 'গড়ন',
+    Icon: Ruler,
+    rows: [
+      ['Form factor', 'আকার', 'Pocket-sized, single-board', 'পকেট সাইজের, একটাই বোর্ড'],
+      ['Mounting', 'মাউন্টিং', 'Edge mounting holes', 'কিনারায় মাউন্টিং হোল'],
+    ],
+  },
+];
+
+const inBox = [
+  { en: 'Bitsflow board', bn: 'বিটসফ্লো বোর্ড' },
+  { en: 'USB-C cable', bn: 'USB-C কেবল' },
+  { en: 'Quick-start guide', bn: 'কুইক-স্টার্ট গাইড' },
+  { en: 'Sticker pack', bn: 'স্টিকার প্যাক' },
+];
+---
+
+<BaseLayout
+  title="Tech specs — Bitsflow"
+  description="Full technical specifications for the Bitsflow learning board: 5×5 RGB display, BLE + Wi-Fi, sensors, GPIO and programming options."
+>
+  <!-- Header -->
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -right-24 -top-16 -z-10 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="container-page py-14 lg:py-20">
+      <a
+        href="/"
+        class="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+      >
+        <ArrowLeft size={14} /> <T en="Back to home" bn="হোমে ফিরে যাও" />
+      </a>
+      <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+        <T en="Tech specs" bn="টেক স্পেক" />
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-ink-soft">
+        <T
+          en="For the makers, teachers and tinkerers who want the details. Here’s everything packed into the Bitsflow board."
+          bn="যেসব মেকার, শিক্ষক আর শখের কারিগর খুঁটিনাটি জানতে চায়, তাদের জন্য। বিটসফ্লো বোর্ডে যা যা আছে, সবটাই এখানে।"
+        />
+      </p>
+      <div class="mt-8 flex flex-wrap gap-4">
+        <a
+          href="/shop"
+          class="rounded-md bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 hover:bg-brand-700"
+        >
+          <T en="Pre-book" bn="প্রি-বুক" /> — {formatBDT(launchPrice)}
+        </a>
+        <a
+          href="/#create"
+          class="rounded-md border border-brand-200 bg-white px-6 py-3.5 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
+        >
+          <T en="What you can build" bn="কী কী বানানো যায়" />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Spec groups -->
+  <section class="bg-sand">
+    <div class="container-page py-14 lg:py-20">
+    <div class="grid gap-6 md:grid-cols-2">
+      {
+        specGroups.map((g) => (
+          <div class="card-soft p-6">
+            <div class="flex items-center gap-3">
+              <span class="icon-tile h-11 w-11">
+                <g.Icon size={22} strokeWidth={1.75} />
+              </span>
+              <h2 class="text-lg font-bold">
+                <T en={g.title} bn={g.titleBn} />
+              </h2>
+            </div>
+            <dl class="mt-4 divide-y divide-black/5">
+              {g.rows.map(([k, kBn, v, vBn]) => (
+                <div class="grid grid-cols-3 gap-3 py-3">
+                  <dt class="col-span-1 text-sm font-semibold text-ink-soft">
+                    <T en={k} bn={kBn} />
+                  </dt>
+                  <dd class="col-span-2 text-[15px] text-ink">
+                    <T en={v} bn={vBn} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- In the box + note -->
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="card-soft p-6">
+        <h2 class="text-lg font-bold">
+          <T en="What’s in the box" bn="বক্সে যা যা আছে" />
+        </h2>
+        <ul class="mt-4 grid grid-cols-2 gap-2 text-[15px] text-ink-soft">
+          {inBox.map((i) => (
+            <li class="flex items-center gap-2">
+              <Package size={15} class="shrink-0 text-brand-500" />
+              <T en={i.en} bn={i.bn} />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="rounded-lg border-l-4 border-amber-400 border-y border-r border-amber-200 bg-amber-50 p-6">
+        <h2 class="flex items-center gap-2 text-lg font-bold text-amber-800">
+          <Info size={18} /> <T en="A note on compatibility" bn="কম্প্যাটিবিলিটি নিয়ে একটা কথা" />
+        </h2>
+        <p class="mt-2 text-[15px] leading-relaxed text-amber-900/80">
+          <T
+            en="Bitsflow is inspired by the BBC micro:bit’s approach to learning, but it is its own board. It is not a micro:bit and is not compatible with micro:bit add-ons, kits or pin layout — Bitsflow has its own GPIO header and accessory ecosystem."
+            bn="বিটসফ্লো BBC micro:bit-এর শেখানোর ধরন থেকে অনুপ্রেরণা নেওয়া, তবে এটা সম্পূর্ণ নিজস্ব একটা বোর্ড। এটা micro:bit নয়, আর micro:bit-এর অ্যাড-অন, কিট বা পিন লেআউটের সাথেও চলে না — বিটসফ্লোর নিজস্ব GPIO হেডার আর অ্যাক্সেসরি ইকোসিস্টেম আছে।"
+          />
+        </p>
+      </div>
+    </div>
+
+    <p class="mt-8 text-center text-sm text-ink-soft/70">
+      <T
+        en="Specifications are preliminary and may change before the final production run."
+        bn="স্পেসিফিকেশন এখনো প্রাথমিক, চূড়ান্ত প্রোডাকশনের আগে বদলাতে পারে।"
+      />
+    </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="container-page py-16 lg:py-20">
+    <div
+      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-8 py-12 text-center text-white"
+    >
+      <div
+        class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+        aria-hidden="true"
+      >
+      </div>
+      <div
+        class="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-accent-500/20 blur-3xl"
+        aria-hidden="true"
+      >
+      </div>
+      <h2 class="relative text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <T en="Ready to build with it?" bn="বানাতে শুরু করতে তৈরি?" />
+      </h2>
+      <a
+        href="/shop"
+        class="relative mt-6 inline-block rounded-md bg-white px-7 py-3 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:bg-brand-50"
+      >
+        <T en="Pre-book now" bn="এখনই প্রি-বুক করো" />
+      </a>
+    </div>
+  </section>
+</BaseLayout>

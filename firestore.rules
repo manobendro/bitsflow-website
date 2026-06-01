@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      // Set this custom claim via the Admin SDK / a Cloud Function for staff.
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Public, read-only product catalog. Writes only from trusted server (Admin SDK
+    // bypasses rules) or admins.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Published blog metadata mirror (optional; canonical content lives in Astro
+    // content collections). Public read.
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User profile document.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid)
+                    // never let a client grant itself privileged fields
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['role', 'admin']);
+      allow delete: if isAdmin();
+    }
+
+    // Unified orders collection (reservations, pre-orders and orders).
+    // All writes go through Cloud Functions (Admin SDK, which bypasses these
+    // rules) so creation, cancellation and status changes stay authoritative.
+    // Clients may only READ their own orders; admins read all via the API.
+    match /orders/{orderId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create, update, delete: if false;
+    }
+  }
+}

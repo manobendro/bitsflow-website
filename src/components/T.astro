@@ -1,0 +1,27 @@
+---
+/**
+ * Bilingual text helper. Renders BOTH languages into the HTML; the active one is
+ * shown via CSS keyed on <html data-lang>. This keeps the switch instant (no
+ * reload, no layout flash) and leaves both languages in the markup for SEO.
+ *
+ * Usage:
+ *   <T en="Sign in" bn="লগ ইন" />
+ *   <T en="Shop" bn="দোকান" as="span" class="font-bold" />
+ *
+ * For attributes/strings (where you can't drop an element), use the t() helper
+ * from src/lib/i18n.ts on the server, or data-i18n on the client.
+ */
+interface Props {
+  en: string;
+  bn: string;
+  /** Wrapper tag — defaults to <span>. Use 'div' inside block contexts. */
+  as?: keyof HTMLElementTagNameMap;
+  class?: string;
+}
+const { en, bn, as = 'span', class: className = '' } = Astro.props;
+const Tag = as;
+---
+
+<Tag class={`lang-wrap ${className}`}>
+  <span class="lang-en" lang="en">{en}</span><span class="lang-bn" lang="bn">{bn}</span>
+</Tag>

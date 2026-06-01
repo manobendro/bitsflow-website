@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Dashboard from '../../components/react/Dashboard.tsx';
+---
+
+<BaseLayout title="Dashboard — Bitsflow" description="Your Bitsflow orders and pre-books.">
+  <section class="container-page py-12 lg:py-16">
+    <Dashboard client:only="react" />
+  </section>
+</BaseLayout>

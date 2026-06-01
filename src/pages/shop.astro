@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ShopActions from '../components/react/ShopActions.tsx';
+import T from '../components/T.astro';
+import { Check, Package, Truck, RotateCcw, ShieldCheck } from 'lucide-astro';
+import type { Product } from '../lib/types';
+
+// Catalog source of truth. Later this can be loaded from Firestore `products`
+// at build time; for now it is defined inline so the page is fully static.
+const product: Product = {
+  id: 'bitsflow-v1',
+  slug: 'bitsflow-board',
+  name: 'Bitsflow Board',
+  tagline: 'micro:bit-inspired learning board with BLE, Wi-Fi & a 5×5 RGB matrix',
+  price: 4500,
+  compareAtPrice: 5500,
+  currency: 'BDT',
+  status: 'prebook',
+  highlights: [
+    '5×5 full-color RGB LED matrix',
+    'Bluetooth LE + Wi-Fi built in',
+    'Accelerometer, compass, light & temperature sensors',
+    '2 buttons, touch logo + GPIO header',
+    'Code with blocks, MicroPython or JavaScript',
+    'USB-C, with its own accessory ecosystem',
+  ],
+};
+
+const taglineBn =
+  'micro:bit থেকে অনুপ্রেরণা নেওয়া লার্নিং বোর্ড — সাথে BLE, Wi-Fi আর ৫×৫ RGB ম্যাট্রিক্স';
+
+// Bangla mirrors of the highlight bullets (same order).
+const highlightsBn = [
+  '৫×৫ ফুল-কালার RGB LED ম্যাট্রিক্স',
+  'বিল্ট-ইন Bluetooth LE + Wi-Fi',
+  'অ্যাক্সিলারোমিটার, কম্পাস, আলো ও তাপমাত্রার সেন্সর',
+  '২টি বাটন, টাচ লোগো + GPIO হেডার',
+  'ব্লক, MicroPython বা JavaScript-এ কোড করো',
+  'USB-C, নিজস্ব এক্সেসরি ইকোসিস্টেমসহ',
+];
+
+const inBox = [
+  { en: 'Bitsflow board', bn: 'বিটসফ্লো বোর্ড' },
+  { en: 'USB-C cable', bn: 'USB-C কেবল' },
+  { en: 'Quick-start guide', bn: 'কুইক-স্টার্ট গাইড' },
+  { en: 'Sticker pack', bn: 'স্টিকার প্যাক' },
+];
+---
+
+<BaseLayout
+  title={`${product.name} — Pre-book | Bitsflow`}
+  description={product.tagline}
+>
+  <section class="container-page py-12 lg:py-16">
+    <div class="grid gap-12 lg:grid-cols-2">
+      <!-- Gallery -->
+      <div>
+        <div
+          class="grid aspect-square place-items-center rounded-xl bg-gradient-to-br from-brand-100 via-brand-200 to-brand-400"
+        >
+          <div
+            class="grid grid-cols-5 gap-2 rounded-lg bg-ink/80 p-6 shadow-2xl"
+            aria-hidden="true"
+          >
+            {
+              Array.from({ length: 25 }).map((_, i) => (
+                <span
+                  class="h-6 w-6 rounded-sm"
+                  style={`background: hsl(${(i * 14) % 360} 90% 60%); box-shadow: 0 0 8px hsl(${(i * 14) % 360} 90% 60%);`}
+                />
+              ))
+            }
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-4 gap-3">
+          {
+            Array.from({ length: 4 }).map((_, i) => (
+              <div class="aspect-square rounded-md bg-gradient-to-br from-brand-50 to-brand-200" />
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Details + actions -->
+      <div id="prebook">
+        <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
+          {product.name}
+        </h1>
+        <p class="mt-3 text-lg text-ink-soft">
+          <T en={product.tagline} bn={taglineBn} />
+        </p>
+
+        <ul class="mt-6 space-y-2.5">
+          {
+            product.highlights.map((h, i) => (
+              <li class="flex items-start gap-3 text-[15px]">
+                <span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md bg-brand-100 text-brand-700">
+                  <Check size={13} strokeWidth={3} />
+                </span>
+                <span><T en={h} bn={highlightsBn[i] ?? h} /></span>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-8">
+          <ShopActions client:load product={product} />
+        </div>
+
+        <div class="mt-8 rounded-lg border border-black/5 bg-sand p-5">
+          <h3 class="text-sm font-bold">
+            <T en="What's in the box" bn="বক্সে যা যা আছে" />
+          </h3>
+          <ul class="mt-3 grid grid-cols-2 gap-2 text-[15px] text-ink-soft">
+            {inBox.map((item) => (
+              <li class="flex items-center gap-2">
+                <Package size={15} class="shrink-0 text-brand-500" />
+                <T en={item.en} bn={item.bn} />
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-soft">
+          <span class="inline-flex items-center gap-1.5">
+            <Truck size={16} class="text-brand-600" />
+            <T en="Delivery across Bangladesh" bn="সারা দেশে ডেলিভারি" />
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <RotateCcw size={16} class="text-brand-600" />
+            <T en="30-day returns" bn="৩০ দিনে রিটার্ন" />
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <ShieldCheck size={16} class="text-brand-600" />
+            <T en="1-year warranty" bn="১ বছরের ওয়ারেন্টি" />
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

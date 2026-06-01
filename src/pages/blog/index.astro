@@ -1,0 +1,92 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import T from '../../components/T.astro';
+import { formatDate } from '../../lib/format';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  title="Bitsflow Blog — tutorials, projects & news"
+  description="Project tutorials, classroom ideas and product news for the Bitsflow learning board."
+>
+  <!-- Header -->
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -right-24 -top-16 -z-10 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <header class="container-page mx-auto max-w-2xl py-16 text-center lg:py-20">
+      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <T en="Bitsflow Blog" bn="বিটসফ্লো ব্লগ" />
+      </p>
+      <h1 class="mt-2 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+        <T en="Tutorials, projects & ideas" bn="টিউটোরিয়াল, প্রজেক্ট আর আইডিয়া" />
+      </h1>
+      <p class="mt-4 text-lg text-ink-soft">
+        <T
+          en="Step-by-step projects, classroom ideas and the latest from the team — written for beginners."
+          bn="ধাপে ধাপে প্রজেক্ট, ক্লাসরুমের আইডিয়া আর টিমের সর্বশেষ খবর — একদম নতুনদের কথা ভেবে লেখা।"
+        />
+      </p>
+    </header>
+  </section>
+
+  <!-- Posts -->
+  <section class="container-page pb-20">
+    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        posts.map((post, i) => (
+          <a
+            href={`/blog/${post.id}/`}
+            class="card-soft group flex flex-col overflow-hidden"
+          >
+            <div
+              class={`aspect-[16/9] bg-gradient-to-br ${
+                i % 3 === 1
+                  ? 'from-accent-300 to-accent-500'
+                  : i % 3 === 2
+                    ? 'from-brand-200 to-brand-500'
+                    : 'from-brand-100 to-brand-400'
+              }`}
+            />
+            <div class="flex flex-1 flex-col p-6">
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.slice(0, 2).map((t) => (
+                  <span class="rounded-md bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <h2 class="mt-3 text-lg font-bold leading-snug group-hover:text-brand-700">
+                {post.data.title}
+              </h2>
+              <p class="mt-2 flex-1 text-[15px] text-ink-soft">
+                {post.data.description}
+              </p>
+              <p class="mt-4 text-xs text-ink-soft/60">
+                {formatDate(post.data.pubDate)} · {post.data.author}
+              </p>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+
+    {
+      posts.length === 0 && (
+        <p class="mt-12 text-center text-ink-soft">
+          <T en="No posts yet — check back soon." bn="এখনো কোনো পোস্ট নেই — একটু পরে আবার এসো।" />
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>

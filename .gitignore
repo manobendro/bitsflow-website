@@ -1,0 +1,32 @@
+# build output
+dist/
+.output/
+
+# dependencies
+node_modules/
+functions/node_modules/
+
+# astro
+.astro/
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*-debug.log
+
+# secrets / env
+.env
+.env.*
+!.env.example
+functions/.env
+functions/.env.*
+!functions/.env.example
+*-service-account*.json
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+Thumbs.db

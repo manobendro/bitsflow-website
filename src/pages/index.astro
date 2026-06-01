@@ -1,0 +1,547 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero3D from '../components/react/Hero3D.tsx';
+import T from '../components/T.astro';
+import Flag from '../components/Flag.astro';
+import { formatBDT } from '../lib/format';
+import {
+  Palette,
+  Rocket,
+  BatteryCharging,
+  Gamepad2,
+  CloudSun,
+  Footprints,
+  Bot,
+  Music,
+  Radio,
+  Baby,
+  GraduationCap,
+  Wrench,
+  Sparkles,
+  ArrowRight,
+  Plus,
+  Check,
+  Heart,
+} from 'lucide-astro';
+
+// When you add the real model, set this to '/models/bitsflow.glb'.
+const MODEL_URL: string | undefined = undefined;
+
+// "Why Bitsflow" — the shift the product makes for the learner.
+// Bangla uses a friendly, informal "tumi" deshi tone throughout.
+const why = [
+  {
+    Icon: Palette,
+    title: 'You see your code come alive',
+    titleBn: 'কোড লিখলে, চোখের সামনেই জ্বলে ওঠে',
+    body: 'Type a line, and 25 full-color LEDs light up in your hands. No black screen, no abstract output — your idea becomes something you can hold and show off.',
+    bodyBn: 'একটা লাইন লিখলেই হাতের মধ্যে ২৫টা রঙিন LED জ্বলে উঠবে। কোনো সাদাকালো স্ক্রিন না, ধরাছোঁয়ার বাইরের কিছু না — তোমার আইডিয়াটাই হাতে নিয়ে সবাইকে দেখানো যায়।',
+  },
+  {
+    Icon: Rocket,
+    title: 'Starts simple, never holds you back',
+    titleBn: 'শুরুটা সহজ, কিন্তু এখানেই থেমে থাকবে না',
+    body: 'Drag blocks on day one. Write MicroPython next month. Ship a Wi-Fi project next year. The same board grows from your first “hello” to real, connected builds.',
+    bodyBn: 'প্রথম দিন শুধু ব্লক টেনে বসাও। পরের মাসে MicroPython লেখো। পরের বছর বানাও Wi-Fi প্রজেক্ট। প্রথম “hello” থেকে সত্যিকারের কানেক্টেড প্রজেক্ট পর্যন্ত — একটা বোর্ডই তোমার সাথে সাথে বড় হবে।',
+  },
+  {
+    Icon: BatteryCharging,
+    title: 'Everything’s already inside',
+    titleBn: 'যা যা লাগে, সব ভেতরেই আছে',
+    body: 'Motion, light and temperature sensors, buttons, BLE and Wi-Fi — all on board. You spend your time creating, not shopping for parts or wiring breadboards.',
+    bodyBn: 'মোশন, আলো আর তাপমাত্রার সেন্সর, বাটন, BLE, Wi-Fi — সবই বোর্ডের ভেতরে দেওয়া। তাই সময়টা যাবে বানানোয়, পার্টস কিনতে বা ব্রেডবোর্ডে তার জোড়া লাগাতে না।',
+  },
+];
+
+// "What you can create" — concrete, aspirational projects (the heart of the page).
+const creations = [
+  {
+    Icon: Gamepad2,
+    title: 'Pocket arcade',
+    titleBn: 'পকেট আর্কেড',
+    body: 'Build a pixel game on the RGB grid — tilt to dodge, press to jump. Your first game, in an afternoon.',
+    bodyBn: 'RGB গ্রিডে নিজের পিক্সেল গেম বানাও — কাত করে বাঁচো, বাটন চেপে লাফ দাও। এক বিকেলেই তোমার প্রথম গেম তৈরি।',
+    level: 'Beginner',
+  },
+  {
+    Icon: CloudSun,
+    title: 'Weather station',
+    titleBn: 'আবহাওয়া স্টেশন',
+    body: 'Read temperature and light, then beam the data to your phone over Bluetooth and chart it live.',
+    bodyBn: 'তাপমাত্রা আর আলো মেপে নাও, তারপর ব্লুটুথে ডেটা ফোনে পাঠিয়ে লাইভ চার্টে দেখো।',
+    level: 'Intermediate',
+  },
+  {
+    Icon: Footprints,
+    title: 'Step counter & fitness band',
+    titleBn: 'স্টেপ কাউন্টার ও ফিটনেস ব্যান্ড',
+    body: 'Use the motion sensor to count steps and cheer you on with color animations when you hit a goal.',
+    bodyBn: 'মোশন সেন্সর দিয়ে পা গুনে নাও, আর লক্ষ্যে পৌঁছালে রঙিন অ্যানিমেশন দিয়ে নিজেকে বাহবা দাও।',
+    level: 'Beginner',
+  },
+  {
+    Icon: Bot,
+    title: 'Wi-Fi robot & smart home',
+    titleBn: 'Wi-Fi রোবট ও স্মার্ট হোম',
+    body: 'Control motors and lights, or post sensor readings to the cloud. Real IoT, no extra modules.',
+    bodyBn: 'মোটর আর লাইট নিয়ন্ত্রণ করো, কিংবা সেন্সরের ডেটা ক্লাউডে পাঠাও। একদম আসল IoT — বাড়তি কোনো মডিউল লাগবে না।',
+    level: 'Advanced',
+  },
+  {
+    Icon: Music,
+    title: 'Light & sound toys',
+    titleBn: 'আলো আর শব্দের খেলনা',
+    body: 'Turn motion into music and color. Wave it, shake it, make it react — instruments you invent.',
+    bodyBn: 'নড়াচড়াকে বানিয়ে ফেলো সুর আর রঙ। হাত নাড়াও, ঝাঁকাও, রিঅ্যাক্ট করাও — যন্ত্রটা তোমারই বানানো।',
+    level: 'Beginner',
+  },
+  {
+    Icon: Radio,
+    title: 'Radio messaging',
+    titleBn: 'রেডিও মেসেজিং',
+    body: 'Send secret messages between two boards across the room. Build your own classroom network.',
+    bodyBn: 'ঘরের এ-মাথা থেকে ও-মাথায় দুটো বোর্ডের মধ্যে গোপন মেসেজ চালাচালি করো। নিজের ক্লাসরুম নেটওয়ার্কই বানিয়ে ফেলো।',
+    level: 'Intermediate',
+  },
+];
+
+// "Your journey" — how it helps the learner grow over time.
+const journey = [
+  {
+    step: '01',
+    title: 'Blocks',
+    titleBn: 'ব্লক',
+    body: 'Snap colorful blocks together in the browser. Make the lights move in minutes — no syntax, no setup, no fear.',
+    bodyBn: 'ব্রাউজারেই রঙিন ব্লক জুড়ে দাও। কয়েক মিনিটেই আলো নড়তে শুরু করবে — সিনট্যাক্স মুখস্থ করা নেই, ইনস্টল করার ঝামেলা নেই, ভয়েরও কিছু নেই।',
+  },
+  {
+    step: '02',
+    title: 'MicroPython',
+    titleBn: 'MicroPython',
+    body: 'Ready for real code? The same projects, now in Python. A gentle, guided step from blocks to text.',
+    bodyBn: 'আসল কোড লিখতে চাও? একই প্রজেক্ট, এবার পাইথনে। ব্লক থেকে টেক্সট কোডে যাওয়ার সহজ আর গোছানো একটা ধাপ।',
+  },
+  {
+    step: '03',
+    title: 'JavaScript & beyond',
+    titleBn: 'JavaScript আর তারও পরে',
+    body: 'Go further with JavaScript, sensors, BLE and Wi-Fi — and start building things the world can actually use.',
+    bodyBn: 'JavaScript, সেন্সর, BLE আর Wi-Fi দিয়ে আরও অনেক দূর যাও — আর বানাতে শুরু করো এমন জিনিস, যা সত্যিকারেই মানুষের কাজে লাগে।',
+  },
+];
+
+// Who it's for.
+const audiences = [
+  {
+    Icon: Baby,
+    title: 'Curious kids (8+)',
+    titleBn: 'কৌতূহলী ছোটরা (৮+)',
+    body: 'A playful first taste of coding and electronics that feels like making toys, not doing homework.',
+    bodyBn: 'কোডিং আর ইলেকট্রনিক্সের প্রথম মজার স্বাদ — হোমওয়ার্ক মনে হবে না, মনে হবে খেলনা বানাচ্ছি।',
+  },
+  {
+    Icon: GraduationCap,
+    title: 'Teachers & classrooms',
+    titleBn: 'শিক্ষক ও ক্লাসরুম',
+    body: 'A complete, durable kit with lessons that scale from first-timers to advanced students — one board for the whole journey.',
+    bodyBn: 'একদম নতুন থেকে অ্যাডভান্সড শিক্ষার্থী — সবার উপযোগী পাঠসহ একটা মজবুত কিট। পুরো শেখার পথটার জন্য একটাই বোর্ড।',
+  },
+  {
+    Icon: Wrench,
+    title: 'Makers & hobbyists',
+    titleBn: 'মেকার ও শখের কারিগর',
+    body: 'Sensors, BLE/Wi-Fi and GPIO in your pocket. Prototype connected ideas in an evening.',
+    bodyBn: 'সেন্সর, BLE/Wi-Fi আর GPIO — পুরোটাই পকেটে। এক সন্ধ্যাতেই কানেক্টেড আইডিয়ার প্রোটোটাইপ দাঁড় করিয়ে ফেলো।',
+  },
+];
+
+const faqs = [
+  {
+    q: 'Do I need to know how to code?',
+    qBn: 'কোডিং জানা থাকতে হবে?',
+    a: 'Not at all. You start by snapping blocks together in your browser and watching the lights respond. When you’re ready, the same board takes you all the way to MicroPython and JavaScript.',
+    aBn: 'একদমই না। শুরুটা হবে ব্রাউজারে ব্লক জুড়ে আলো নড়তে দেখা দিয়ে। যখন তৈরি মনে হবে, সেই একই বোর্ড তোমাকে MicroPython আর JavaScript পর্যন্ত নিয়ে যাবে।',
+  },
+  {
+    q: 'What do I need to get started?',
+    qBn: 'শুরু করতে কী কী লাগবে?',
+    a: 'Just the board, the included USB-C cable, and a computer or phone. Sensors, buttons, BLE and Wi-Fi are already built in — nothing else to buy.',
+    aBn: 'শুধু বোর্ডটা, সাথে দেওয়া USB-C কেবল আর একটা কম্পিউটার বা ফোন। সেন্সর, বাটন, BLE, Wi-Fi সব আগে থেকেই দেওয়া আছে — বাড়তি কিছু কিনতে হবে না।',
+  },
+  {
+    q: 'Is Bitsflow a BBC micro:bit, or compatible with its accessories?',
+    qBn: 'বিটসফ্লো কি BBC micro:bit, নাকি ওটার এক্সেসরিজের সাথে চলে?',
+    a: 'No. Bitsflow is its own board, inspired by the micro:bit’s approach to learning. It is not a micro:bit and is not compatible with micro:bit add-ons, kits or pin layout — it has its own GPIO header and accessory ecosystem.',
+    aBn: 'না। বিটসফ্লো একদম আলাদা একটা বোর্ড, micro:bit-এর শেখানোর ধরন থেকে অনুপ্রেরণা নেওয়া। এটা micro:bit নয়, আর micro:bit-এর অ্যাড-অন, কিট বা পিন লেআউটের সাথেও চলে না — এর নিজস্ব GPIO হেডার আর এক্সেসরি আছে।',
+  },
+  {
+    q: 'What age group is it for?',
+    qBn: 'কোন বয়সের জন্য?',
+    a: 'Great for ages 8+ at home and in classrooms. Beginners start with blocks; older students and makers move to MicroPython and JavaScript.',
+    aBn: 'ঘরে কিংবা ক্লাসরুমে ৮ বছর বা তার বেশি বয়সীদের জন্য দারুণ। নতুনরা শুরু করে ব্লক দিয়ে; বড় শিক্ষার্থী আর মেকাররা এগিয়ে যায় MicroPython আর JavaScript-এ।',
+  },
+  {
+    q: 'When does it ship?',
+    qBn: 'ডেলিভারি কবে পাব?',
+    a: 'Pre-book now to reserve a unit from the first production run. You’ll get an email with the ship date and a payment link.',
+    aBn: 'এখন প্রি-বুক করে প্রথম ব্যাচ থেকেই একটা রিজার্ভ করে রাখো। ডেলিভারির তারিখ আর পেমেন্ট লিংকসহ একটা ইমেইল পেয়ে যাবে।',
+  },
+];
+
+const launchPrice = 4500; // BDT — placeholder, edit freely
+
+const levelLabel: Record<string, { en: string; bn: string }> = {
+  Beginner: { en: 'Beginner', bn: 'নতুন' },
+  Intermediate: { en: 'Intermediate', bn: 'মাঝারি' },
+  Advanced: { en: 'Advanced', bn: 'অ্যাডভান্সড' },
+};
+
+const levelStyle: Record<string, string> = {
+  Beginner: 'bg-brand-100 text-brand-700',
+  Intermediate: 'bg-amber-100 text-amber-700',
+  Advanced: 'bg-accent-500/15 text-accent-600',
+};
+---
+
+<BaseLayout>
+  <!-- HERO — experience first -->
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 via-paper to-paper"
+    >
+    </div>
+    <!-- soft decorative blobs for a warm, playful backdrop -->
+    <div
+      class="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -left-20 top-40 -z-10 h-64 w-64 rounded-full bg-accent-300/20 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="container-page grid items-center gap-4 py-8 sm:gap-8 sm:py-12 lg:grid-cols-2 lg:py-20"
+    >
+      <div>
+        <span
+          class="reveal stagger-1 inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-white px-3 py-1 text-xs font-semibold text-brand-700"
+        >
+          <Sparkles size={14} />
+          <T en="Now open for pre-book" bn="প্রি-বুক শুরু হয়ে গেছে" />
+        </span>
+        <h1
+          class="reveal stagger-2 mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-6xl"
+        >
+          <span class="lang-en"
+            >Make something <span class="text-brand-600">amazing</span> in the
+            next ten minutes.</span
+          ><span class="lang-bn" lang="bn"
+            >মাত্র দশ মিনিটেই <span class="text-brand-600">দারুণ</span> কিছু
+            একটা বানিয়ে ফেলো।</span
+          >
+        </h1>
+        <p class="reveal stagger-3 mt-5 max-w-xl text-lg text-ink-soft">
+          <span class="lang-en"
+            >Bitsflow is the pocket-sized board where your ideas light up —
+            literally. Code a game, a gadget or a glowing work of art, and watch
+            it come alive on a brilliant <strong>5×5 RGB display</strong>.</span
+          ><span class="lang-bn" lang="bn"
+            >বিটসফ্লো পকেট সাইজের ছোট্ট একটা বোর্ড, যেখানে তোমার আইডিয়া সত্যি
+            সত্যিই আলো হয়ে জ্বলে ওঠে। একটা গেম, গ্যাজেট বা আলোর শিল্প কোড করো —
+            আর দেখো সেটা ঝলমলে <strong>৫×৫ RGB ডিসপ্লে</strong>তে জীবন্ত হয়ে
+            উঠছে।</span
+          >
+        </p>
+        <div class="reveal stagger-4 mt-8 flex flex-wrap items-center gap-4">
+          <a
+            href="/shop"
+            class="group inline-flex items-center gap-2 rounded-md bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30"
+          >
+            <T en="Start creating" bn="বানানো শুরু করো" /> — {formatBDT(launchPrice)}
+            <ArrowRight size={18} class="transition group-hover:translate-x-0.5" />
+          </a>
+          <a
+            href="/#create"
+            class="rounded-md border border-brand-200 bg-white px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
+          >
+            <T en="See what you can build" bn="কী কী বানানো যায়, দেখো" />
+          </a>
+        </div>
+        <p class="reveal stagger-5 mt-4 flex items-center gap-1.5 text-sm text-ink-soft">
+          <Flag size={18} />
+          <T
+            en="Ships across Bangladesh · No code experience needed · Grows with you"
+            bn="সারা দেশে ডেলিভারি · কোডিং না জানলেও সমস্যা নেই · তোমার সাথে সাথে বড় হয়"
+          />
+        </p>
+      </div>
+
+      <div
+        class="relative -mx-5 -mt-4 h-[300px] sm:mx-0 sm:mt-0 sm:h-[440px] lg:order-last lg:h-[560px]"
+      >
+        <Hero3D client:visible modelUrl={MODEL_URL} />
+        <p
+          class="absolute bottom-2 left-0 right-0 text-center text-xs text-ink-soft/60"
+        >
+          <T en="Drag to rotate" bn="টেনে ঘোরাও" />
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST STRIP -->
+  <section class="border-y border-black/5 bg-sand">
+    <div
+      class="container-page flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6 text-sm font-medium text-ink-soft"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <Check size={15} class="text-brand-600" />
+        <T en="Code in blocks, Python or JavaScript" bn="ব্লক, পাইথন বা JavaScript-এ কোড করো" />
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <Check size={15} class="text-brand-600" />
+        <T en="Loved in classrooms" bn="ক্লাসরুমে দারুণ জনপ্রিয়" />
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <Check size={15} class="text-brand-600" />
+        <T en="Beginner-friendly" bn="নতুনদের জন্য সহজ" />
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <Check size={15} class="text-brand-600" />
+        <T en="Build in minutes" bn="মিনিটেই বানিয়ে ফেলো" />
+      </span>
+    </div>
+  </section>
+
+  <!-- WHY BITSFLOW -->
+  <section id="why" class="container-page py-16 lg:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <T en="Why Bitsflow" bn="কেন বিটসফ্লো" />
+      </p>
+      <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <T en="Learning to code should feel like play" bn="কোড শেখাটা হোক খেলার মতোই মজার" />
+      </h2>
+      <p class="mt-4 text-lg text-ink-soft">
+        <T
+          en="Most boards hide your work behind a screen of text. Bitsflow puts it right in your hands — colorful, physical, and impossible to put down."
+          bn="বেশির ভাগ বোর্ডে তোমার কাজ টেক্সটের স্ক্রিনের পেছনেই লুকিয়ে থাকে। বিটসফ্লো সেটা তুলে দেয় তোমার হাতের মুঠোয় — রঙিন, ছুঁয়ে দেখা যায়, আর একবার ধরলে হাত থেকে নামাতেই ইচ্ছে করে না।"
+        />
+      </p>
+    </div>
+    <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
+      {
+        why.map((w) => (
+          <div class="card-soft p-7">
+            <div class="icon-tile h-14 w-14">
+              <w.Icon size={26} strokeWidth={1.75} />
+            </div>
+            <h3 class="mt-5 text-xl font-bold">
+              <T en={w.title} bn={w.titleBn} />
+            </h3>
+            <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+              <T en={w.body} bn={w.bodyBn} />
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- WHAT YOU CAN CREATE -->
+  <section id="create" class="bg-sand">
+    <div class="container-page py-16 lg:py-24">
+      <div class="mx-auto max-w-2xl text-center">
+        <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+          <T en="What you can create" bn="কী কী বানাতে পারো" />
+        </p>
+        <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <T en="From your first blink to your first robot" bn="প্রথম আলো জ্বালানো থেকে প্রথম রোবট" />
+        </h2>
+        <p class="mt-4 text-lg text-ink-soft">
+          <T
+            en="Here are just a few of the things makers build with Bitsflow. Pick one and you could be running it tonight."
+            bn="বিটসফ্লো দিয়ে মেকাররা যেসব বানায়, তার কয়েকটা এখানে। যেকোনো একটা বেছে নাও — আজ রাতেই চালু করে ফেলতে পারো।"
+          />
+        </p>
+      </div>
+      <div class="scroll-reveal mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          creations.map((c) => (
+            <div class="card-soft p-6">
+              <div class="flex items-start justify-between">
+                <div class="icon-tile h-14 w-14">
+                  <c.Icon size={26} strokeWidth={1.75} />
+                </div>
+                <span class={`chip ${levelStyle[c.level]}`}>
+                  <T en={levelLabel[c.level].en} bn={levelLabel[c.level].bn} />
+                </span>
+              </div>
+              <h3 class="mt-5 text-xl font-bold">
+                <T en={c.title} bn={c.titleBn} />
+              </h3>
+              <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                <T en={c.body} bn={c.bodyBn} />
+              </p>
+            </div>
+          ))
+        }
+      </div>
+      <div class="mt-12 text-center">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 rounded-md border border-brand-200 bg-white px-6 py-3 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
+        >
+          <T en="Explore project tutorials" bn="প্রজেক্ট টিউটোরিয়াল ঘুরে দেখো" />
+          <ArrowRight size={18} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- YOUR JOURNEY / HOW IT HELPS -->
+  <section id="journey" class="container-page py-16 lg:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <T en="How it helps you grow" bn="কীভাবে তোমাকে এগিয়ে নেয়" />
+      </p>
+      <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <T en="One board for your whole coding journey" bn="পুরো কোডিং পথটার জন্য একটাই বোর্ড" />
+      </h2>
+      <p class="mt-4 text-lg text-ink-soft">
+        <T
+          en="You don’t outgrow Bitsflow — you grow into it. Start where you’re comfortable and level up when you’re ready."
+          bn="বিটসফ্লোকে তুমি ছাড়িয়ে যাবে না — বরং এর সাথেই বড় হবে। যেখানে স্বচ্ছন্দ, সেখান থেকেই শুরু করো; তৈরি হলে পরের ধাপে এগিয়ে যাও।"
+        />
+      </p>
+    </div>
+    <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
+      {
+        journey.map((j) => (
+          <div class="card-soft border-l-4 border-l-brand-500 p-7">
+            <span class="grid h-11 w-11 place-items-center rounded-md bg-brand-600 text-lg font-extrabold text-white">
+              {j.step}
+            </span>
+            <h3 class="mt-4 text-xl font-bold">
+              <T en={j.title} bn={j.titleBn} />
+            </h3>
+            <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+              <T en={j.body} bn={j.bodyBn} />
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- WHO IT'S FOR -->
+  <section>
+    <div class="container-page py-16 lg:py-24">
+      <div class="mx-auto max-w-2xl text-center">
+        <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+          <T en="Who it's for" bn="কাদের জন্য" />
+        </p>
+        <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <T en="Made for everyone who loves to make" bn="যারা বানাতে ভালোবাসে, সবার জন্যই" />
+        </h2>
+      </div>
+      <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
+        {
+          audiences.map((a) => (
+            <div class="card-soft p-7 text-center">
+              <div class="icon-tile mx-auto h-16 w-16">
+                <a.Icon size={30} strokeWidth={1.75} />
+              </div>
+              <h3 class="mt-4 text-xl font-bold">
+                <T en={a.title} bn={a.titleBn} />
+              </h3>
+              <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                <T en={a.body} bn={a.bodyBn} />
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="bg-sand">
+    <div class="container-page py-16 lg:py-24">
+    <div class="mx-auto max-w-3xl">
+      <h2 class="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <T en="Questions, answered" bn="মনে প্রশ্ন? উত্তর এখানে" />
+      </h2>
+      <div class="mt-10 space-y-3">
+        {
+          faqs.map((f) => (
+            <details class="group rounded-lg border border-black/5 bg-white p-5 shadow-[0_1px_2px_rgb(20_39_31_/_0.04)] transition open:shadow-[0_8px_24px_-12px_rgb(20_39_31_/_0.12)]">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-semibold">
+                <T en={f.q} bn={f.qBn} />
+                <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-brand-50 text-brand-600 transition group-open:rotate-45 group-open:bg-brand-600 group-open:text-white">
+                  <Plus size={18} />
+                </span>
+              </summary>
+              <p class="mt-3 text-[15px] leading-relaxed text-ink-soft">
+                <T en={f.a} bn={f.aBn} />
+              </p>
+            </details>
+          ))
+        }
+      </div>
+      <p class="mt-8 text-center text-sm text-ink-soft">
+        <T en="Want the nuts and bolts?" bn="খুঁটিনাটি জানতে চাও?" />{' '}
+        <a
+          href="/specs"
+          class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline"
+        >
+          <T en="See the full tech specs" bn="পুরো টেক স্পেক দেখে নাও" /> <ArrowRight size={14} />
+        </a>
+      </p>
+    </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="container-page py-16 lg:py-20">
+    <div
+      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-8 py-14 text-center text-white"
+    >
+      <div
+        class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+        aria-hidden="true"
+      >
+      </div>
+      <div
+        class="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-accent-500/20 blur-3xl"
+        aria-hidden="true"
+      >
+      </div>
+      <h2 class="relative text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <T en="Your next idea is waiting" bn="তোমার পরের আইডিয়াটা অপেক্ষায়" />
+      </h2>
+      <p class="mx-auto mt-3 max-w-xl text-brand-100">
+        <T
+          en="Reserve a board from the first production run and start making. No payment until we confirm your ship date."
+          bn="প্রথম ব্যাচ থেকে একটা বোর্ড রিজার্ভ করে বানানো শুরু করে দাও। ডেলিভারির তারিখ কনফার্ম হওয়ার আগে কোনো টাকা দিতে হবে না।"
+        />
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <a
+          href="/shop"
+          class="inline-block rounded-md bg-white px-7 py-3 font-semibold text-brand-700 transition hover:bg-brand-50"
+        >
+          <T en="Pre-book now" bn="এখনই প্রি-বুক করো" /> — {formatBDT(launchPrice)}
+        </a>
+        <a
+          href="/specs"
+          class="inline-block rounded-md border border-white/40 px-7 py-3 font-semibold text-white transition hover:bg-white/10"
+        >
+          <T en="View specs" bn="স্পেক দেখো" />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

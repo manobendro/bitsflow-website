@@ -1,0 +1,42 @@
+{
+  "name": "bitsflow-website",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Marketing site, blog, shop/pre-book and user dashboard for the Bitsflow learning board.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "emulators": "firebase emulators:start",
+    "test:e2e": "node tests/e2e.mjs",
+    "deploy": "npm run build && firebase deploy",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.0.3",
+    "@astrojs/react": "^4.1.2",
+    "@astrojs/sitemap": "^3.2.1",
+    "@react-three/drei": "^10.0.4",
+    "@react-three/fiber": "^9.0.4",
+    "astro": "^5.1.5",
+    "firebase": "^11.2.0",
+    "lucide-astro": "^0.556.0",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.172.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "@types/three": "^0.172.0",
+    "puppeteer": "^24.43.1",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.3"
+  }
+}

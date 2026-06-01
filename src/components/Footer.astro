@@ -1,0 +1,95 @@
+---
+import { Hexagon } from 'lucide-astro';
+import T from './T.astro';
+import Flag from './Flag.astro';
+const year = new Date().getFullYear();
+const cols = [
+  {
+    title: 'Product',
+    titleBn: 'প্রোডাক্ট',
+    links: [
+      { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো' },
+      { href: '/#create', en: 'What you can build', bn: 'কী বানাতে পারো' },
+      { href: '/specs', en: 'Specs', bn: 'স্পেক' },
+      { href: '/shop#prebook', en: 'Pre-book', bn: 'প্রি-বুক' },
+    ],
+  },
+  {
+    title: 'Learn',
+    titleBn: 'শেখো',
+    links: [
+      { href: '/blog', en: 'Blog', bn: 'ব্লগ' },
+      { href: '/blog', en: 'Tutorials', bn: 'টিউটোরিয়াল' },
+      { href: '/#faq', en: 'FAQ', bn: 'সাধারণ প্রশ্ন' },
+    ],
+  },
+  {
+    title: 'Account',
+    titleBn: 'অ্যাকাউন্ট',
+    links: [
+      { href: '/login', en: 'Sign in', bn: 'লগ ইন' },
+      { href: '/dashboard', en: 'Dashboard', bn: 'ড্যাশবোর্ড' },
+      { href: '/dashboard', en: 'My orders', bn: 'আমার অর্ডার' },
+    ],
+  },
+];
+---
+
+<footer class="border-t border-black/5 bg-sand">
+  <div class="container-page grid gap-10 py-12 sm:grid-cols-2 md:grid-cols-4">
+    <div>
+      <div class="flex items-center gap-2 font-extrabold">
+        <span
+          class="grid h-8 w-8 place-items-center rounded-md bg-brand-600 text-white"
+          aria-hidden="true"
+        >
+          <Hexagon size={18} strokeWidth={2.5} />
+        </span>
+        Bitsflow
+      </div>
+      <p class="mt-3 max-w-xs text-sm text-ink-soft">
+        <T
+          en="The pocket-sized learning board for the next generation of makers."
+          bn="পরের প্রজন্মের মেকারদের জন্য পকেট সাইজের লার্নিং বোর্ড।"
+        />
+      </p>
+    </div>
+    {
+      cols.map((c) => (
+        <div>
+          <h3 class="text-sm font-semibold text-ink">
+            <T en={c.title} bn={c.titleBn} />
+          </h3>
+          <ul class="mt-3 space-y-2">
+            {c.links.map((l) => (
+              <li>
+                <a
+                  href={l.href}
+                  class="text-sm text-ink-soft transition hover:text-brand-700"
+                >
+                  <T en={l.en} bn={l.bn} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+  <div class="border-t border-black/5">
+    <div
+      class="container-page flex flex-col items-center justify-between gap-2 py-5 text-sm text-ink-soft sm:flex-row"
+    >
+      <p>
+        <T
+          en={`© ${year} Bitsflow. All rights reserved.`}
+          bn={`© ${year} বিটসফ্লো। সর্বস্বত্ব সংরক্ষিত।`}
+        />
+      </p>
+      <p class="flex items-center gap-1.5">
+        <T en="Made for makers in Bangladesh" bn="বাংলাদেশের মেকারদের জন্য বানানো" />
+        <Flag size={16} />
+      </p>
+    </div>
+  </div>
+</footer>
