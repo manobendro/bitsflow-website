@@ -115,14 +115,14 @@ export default function ShopActions({ product }: { product: Product }) {
           <>
             <button
               onClick={() => open('reserve')}
-              disabled={loading || product.status === 'sold_out'}
+              disabled={product.status === 'sold_out'}
               className="w-full rounded-md bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:translate-y-0 disabled:opacity-60"
             >
               {t('Reserve (no payment now)', 'রিজার্ভ করো (এখন টাকা লাগবে না)', lang)}
             </button>
             <button
               onClick={() => open('preorder')}
-              disabled={loading}
+              disabled={product.status === 'sold_out'}
               className="w-full rounded-md border border-brand-200 bg-white px-6 py-3.5 font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-60"
             >
               {t('Pre-order & pay later', 'প্রি-অর্ডার করো, পরে টাকা দাও', lang)}
@@ -131,7 +131,7 @@ export default function ShopActions({ product }: { product: Product }) {
         ) : (
           <button
             onClick={() => open('order')}
-            disabled={loading || product.status === 'sold_out'}
+            disabled={product.status === 'sold_out'}
             className="w-full rounded-md bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 hover:bg-brand-700 disabled:translate-y-0 disabled:opacity-60"
           >
             {t('Buy now', 'এখনই কিনে ফেলো', lang)}

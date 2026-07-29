@@ -1,7 +1,7 @@
 ---
 import AuthNav from './react/AuthNav.tsx';
 import LangToggle from './react/LangToggle.tsx';
-import { Hexagon } from 'lucide-astro';
+import { Hexagon, Menu, X } from 'lucide-astro';
 
 const links = [
   { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো' },
@@ -62,7 +62,74 @@ function isActive(href: string) {
 
     <div class="flex shrink-0 items-center gap-2.5">
       <LangToggle client:load />
-      <AuthNav client:load />
+      <span class="hidden md:inline-flex"><AuthNav client:load /></span>
+      <!-- Mobile hamburger button -->
+      <button
+        id="mobile-menu-btn"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-brand-50 hover:text-brand-700 md:hidden"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <Menu size={22} id="menu-icon-open" />
+        <X size={22} id="menu-icon-close" class="hidden" />
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile navigation drawer -->
+  <div
+    id="mobile-menu"
+    class="hidden border-t border-black/5 bg-paper md:hidden"
+  >
+    <div class="container-page space-y-1 py-4">
+      {
+        links.map((l) => (
+          <a
+            href={l.href}
+            aria-current={isActive(l.href) ? 'page' : undefined}
+            class:list={[
+              'block rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+              isActive(l.href)
+                ? 'bg-brand-50 text-brand-700'
+                : 'text-ink-soft hover:bg-brand-50 hover:text-brand-700',
+            ]}
+          >
+            <span class="lang-en">{l.en}</span><span class="lang-bn" lang="bn">{l.bn}</span>
+          </a>
+        ))
+      }
+      <div class="border-t border-black/5 pt-3 mt-2">
+        <AuthNav client:load />
+      </div>
+    </div>
+  </div>
 </header>
+
+<script is:inline>
+  (function () {
+    var btn = document.getElementById('mobile-menu-btn');
+    var menu = document.getElementById('mobile-menu');
+    var iconOpen = document.getElementById('menu-icon-open');
+    var iconClose = document.getElementById('menu-icon-close');
+    if (!btn || !menu || !iconOpen || !iconClose) return;
+    btn.addEventListener('click', function () {
+      var isOpen = !menu.classList.contains('hidden');
+      menu.classList.toggle('hidden');
+      iconOpen.classList.toggle('hidden');
+      iconClose.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+      btn.setAttribute('aria-label', isOpen ? 'Open menu' : 'Close menu');
+    });
+    // Close mobile menu when a link is clicked (for in-page anchors).
+    menu.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        menu.classList.add('hidden');
+        iconOpen.classList.remove('hidden');
+        iconClose.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open menu');
+      });
+    });
+  })();
+</script>
