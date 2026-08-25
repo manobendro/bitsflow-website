@@ -118,6 +118,7 @@ export default function AuthForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
               className={inputCls}
               placeholder={t('Ada Lovelace', 'তোমার নাম', lang)}
             />
@@ -129,6 +130,7 @@ export default function AuthForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             className={inputCls}
             placeholder="you@example.com"
           />
@@ -140,6 +142,7 @@ export default function AuthForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
+            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             className={inputCls}
             placeholder="••••••••"
           />
