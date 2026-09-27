@@ -6,6 +6,8 @@
  * To grant the durable custom claim, run `npm run set-admin -- <email>` in the
  * functions directory (see scripts/setAdmin.ts), or add the email here.
  */
+import { getAuth } from 'firebase-admin/auth';
+
 export const ADMIN_EMAILS: string[] = [
   'mr.manob7@gmail.com',
   // add more admin emails here, or set the `admin` custom claim instead
@@ -16,6 +18,20 @@ export interface DecodedishToken {
   email?: string;
   admin?: boolean;
   [k: string]: unknown;
+}
+
+/** Verify the Firebase ID token from the `Authorization: Bearer …` header. */
+export async function requireUser(req: {
+  headers: { authorization?: string };
+}): Promise<DecodedishToken | null> {
+  const header = req.headers.authorization ?? '';
+  const match = header.match(/^Bearer (.+)$/);
+  if (!match) return null;
+  try {
+    return (await getAuth().verifyIdToken(match[1])) as DecodedishToken;
+  } catch {
+    return null;
+  }
 }
 
 export function isAdmin(token: DecodedishToken | null): boolean {

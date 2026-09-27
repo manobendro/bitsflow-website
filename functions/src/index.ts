@@ -8,7 +8,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import { initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import {
   getFirestore,
   FieldValue,
@@ -16,7 +15,14 @@ import {
 } from 'firebase-admin/firestore';
 import { getProduct } from './catalog.js';
 import { getPaymentProvider } from './payments/index.js';
-import { isAdmin, type DecodedishToken } from './admin.js';
+import { isAdmin, requireUser } from './admin.js';
+import {
+  handleAdminListProducts,
+  handleAdminCreateProduct,
+  handleAdminUpdateProduct,
+  handleAdminDeleteProduct,
+  handleAdminSeedProducts,
+} from './products.js';
 
 initializeApp();
 const db = getFirestore();
@@ -55,7 +61,7 @@ export const api = onRequest(
       res.set('Vary', 'Origin');
     }
     if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Methods', 'POST, PATCH, GET, OPTIONS');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
       res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
       res.status(204).send('');
       return;
@@ -88,6 +94,34 @@ export const api = onRequest(
         return;
       }
 
+      // --- admin: products (live catalog) ---
+      if (path === '/admin/products') {
+        if (req.method === 'GET') {
+          await handleAdminListProducts(req, res);
+          return;
+        }
+        if (req.method === 'POST') {
+          await handleAdminCreateProduct(req, res);
+          return;
+        }
+      }
+      if (req.method === 'POST' && path === '/admin/products/seed') {
+        await handleAdminSeedProducts(req, res);
+        return;
+      }
+      const adminProductMatch = path.match(/^\/admin\/products\/([^/]+)$/);
+      if (adminProductMatch && adminProductMatch[1] !== 'seed') {
+        const productId = safeDecode(adminProductMatch[1]);
+        if (req.method === 'PATCH') {
+          await handleAdminUpdateProduct(req, res, productId);
+          return;
+        }
+        if (req.method === 'DELETE') {
+          await handleAdminDeleteProduct(req, res, productId);
+          return;
+        }
+      }
+
       if (req.method === 'POST' && path === '/payments/webhook') {
         await handlePaymentWebhook(req, res);
         return;
@@ -101,17 +135,11 @@ export const api = onRequest(
   }
 );
 
-/** Verify the Firebase ID token from the Authorization header. */
-async function requireUser(
-  req: import('firebase-functions/v2/https').Request
-): Promise<DecodedishToken | null> {
-  const header = req.headers.authorization ?? '';
-  const match = header.match(/^Bearer (.+)$/);
-  if (!match) return null;
+function safeDecode(s: string): string {
   try {
-    return (await getAuth().verifyIdToken(match[1])) as DecodedishToken;
+    return decodeURIComponent(s);
   } catch {
-    return null;
+    return s;
   }
 }
 
@@ -155,11 +183,16 @@ async function handleCreateOrder(
 
   const body = req.body ?? {};
   const qty = Math.max(1, Math.min(20, Number(body.quantity) || 1));
-  const product = getProduct(String(body.productId));
-  if (!product) {
-    res.status(400).json({ error: 'Unknown product' });
+  const lookup = await getProduct(String(body.productId ?? ''));
+  if (!lookup.found) {
+    if (lookup.reason === 'inactive') {
+      res.status(409).json({ error: 'This product is no longer available' });
+    } else {
+      res.status(400).json({ error: 'Unknown product' });
+    }
     return;
   }
+  const product = lookup.product;
   if (product.status === 'sold_out') {
     res.status(409).json({ error: 'This product is sold out' });
     return;
@@ -213,6 +246,19 @@ async function handleCreateOrder(
     updatedAt: now,
   });
 
+  // Remember this checkout on the user's profile so their next order form can be
+  // pre-filled. cleanCustomer/cleanShipping return every field (blanks included),
+  // so the merge fully replaces the previous address. Best-effort: a profile
+  // write failure must never fail an order that was already created.
+  try {
+    await db
+      .collection('users')
+      .doc(user.uid)
+      .set({ checkout: { customer, shipping, updatedAt: nowMs } }, { merge: true });
+  } catch (err) {
+    logger.warn('could not save checkout details to profile', { uid: user.uid, err });
+  }
+
   // Hand off to the payment provider only for committed purchases (not reserves).
   let paymentUrl: string | null = null;
   if (type !== 'reserve') {
@@ -225,8 +271,8 @@ async function handleCreateOrder(
       customer: { uid: user.uid, email: user.email ?? '', name: customer.name },
       returnUrls: {
         success: `${baseUrl}/dashboard?order=${orderRef.id}&status=success`,
-        cancel: `${baseUrl}/shop?order=${orderRef.id}&status=cancel`,
-        fail: `${baseUrl}/shop?order=${orderRef.id}&status=fail`,
+        cancel: `${baseUrl}/products?order=${orderRef.id}&status=cancel`,
+        fail: `${baseUrl}/products?order=${orderRef.id}&status=fail`,
       },
     });
     paymentUrl = checkout.paymentUrl;

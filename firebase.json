@@ -9,6 +9,10 @@
         "source": "/api/**",
         "function": "api",
         "region": "asia-southeast1"
+      },
+      {
+        "source": "/products/**",
+        "destination": "/products/view/index.html"
       }
     ],
     "headers": [
@@ -36,7 +40,8 @@
       "source": "functions",
       "codebase": "default",
       "runtime": "nodejs20",
-      "ignore": ["node_modules", ".git", "*.local"]
+      "ignore": ["node_modules", ".git", "*.local"],
+      "predeploy": ["npm --prefix functions run build"]
     }
   ],
   "emulators": {
