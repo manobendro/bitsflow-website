@@ -23,7 +23,7 @@ await page.evaluateOnNewDocument(() => {
 });
 
 async function shot(path, name) {
-  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle0' });
+  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2' });
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: `${OUT}bn-${name}.png` });
   console.log(`shot bn-${name}`);

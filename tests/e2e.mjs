@@ -89,6 +89,66 @@ async function typeInto(page, selector, value) {
   await page.type(selector, value);
 }
 
+/** Clear a field reliably (works for type="number" too), then type. */
+async function replaceInput(page, selector, value) {
+  await page.waitForSelector(selector, { visible: true, timeout: 10000 });
+  await page.focus(selector);
+  await page.keyboard.down('Control');
+  await page.keyboard.press('KeyA');
+  await page.keyboard.up('Control');
+  await page.keyboard.press('Backspace');
+  await page.type(selector, value);
+}
+
+/** Wait until a button is enabled, then click it. */
+async function clickWhenEnabled(page, selector, timeout = 10000) {
+  await page.waitForFunction(
+    (s) => {
+      const b = document.querySelector(s);
+      return b && !b.disabled;
+    },
+    { timeout },
+    selector
+  );
+  await page.click(selector);
+}
+
+// --- analytics (dev server runs analytics in "debug" mode: events are logged
+// to sessionStorage["bf:analytics"] instead of being sent to GA) ---
+async function analyticsLog(page) {
+  return page.evaluate(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('bf:analytics') || '[]');
+    } catch {
+      return [];
+    }
+  });
+}
+
+/** Wait for an analytics event whose params satisfy `match`. */
+async function expectEvent(page, name, match = () => true, timeout = 8000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const hit = (await analyticsLog(page)).find(
+      (e) => e.name === name && match(e.params || {})
+    );
+    if (hit) return hit;
+    await sleep(200);
+  }
+  const seen = [...new Set((await analyticsLog(page)).map((e) => e.name))].join(', ');
+  throw new Error(`analytics: no matching "${name}" event (seen: ${seen})`);
+}
+
+/** Fill the checkout form (modal) with valid details. */
+async function fillOrderForm(page, name) {
+  await replaceInput(page, 'input[placeholder="Your full name"]', name);
+  await replaceInput(page, 'input[placeholder="01XXXXXXXXX"]', '01712345678');
+  await replaceInput(page, 'input[placeholder="Optional"]', 'Test School');
+  await replaceInput(page, 'input[placeholder="House / road / area"]', '123 Test Road');
+  await replaceInput(page, 'input[placeholder="City"]', 'Dhaka');
+  await replaceInput(page, 'input[placeholder="District"]', 'Dhaka');
+}
+
 async function main() {
   console.log(`\n🧪 Bitsflow E2E — base=${BASE} headless=${HEADLESS} run=${STAMP}\n`);
 
@@ -146,6 +206,45 @@ async function main() {
       if (back !== 'en') throw new Error('did not switch back to en');
     });
 
+    await step('analytics: page_view + language_change are logged', async () => {
+      await expectEvent(page, 'page_view', (p) => p.page_path === '/');
+      await expectEvent(page, 'language_change', (p) => p.language === 'bn' && p.previous_language === 'en');
+      await expectEvent(page, 'language_change', (p) => p.language === 'en' && p.previous_language === 'bn');
+    });
+
+    await step('mobile menu opens and navigates (390px)', async () => {
+      await page.setViewport({ width: 390, height: 844 });
+      try {
+        await page.goto(BASE + '/', { waitUntil: 'networkidle2' });
+        const toggle = await page.waitForSelector('#menu-toggle', { visible: true });
+        await toggle.click();
+        await page.waitForFunction(
+          () => document.getElementById('menu-toggle')?.getAttribute('aria-expanded') === 'true'
+        );
+        const shop = '#mobile-menu a[href="/products"]';
+        await page.waitForSelector(shop, { visible: true });
+        await sleep(400); // let the slide-down settle before clicking
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'networkidle2' }),
+          page.click(shop),
+        ]);
+        const path = await page.evaluate(() => location.pathname);
+        if (!path.startsWith('/products'))
+          throw new Error(`menu link did not navigate to /products (at ${path})`);
+      } finally {
+        await page.setViewport({ width: 1280, height: 900 });
+      }
+    });
+
+    await step('analytics: menu_open + mobile nav tag are logged', async () => {
+      await expectEvent(page, 'menu_open', (p) => p.viewport === 'mobile');
+      await expectEvent(
+        page,
+        'cta_click',
+        (p) => p.cta_id === 'nav_shop' && p.menu === 'mobile' && p.location === 'header'
+      );
+    });
+
     // ---------- 2. Specs page ----------
     await step('specs page loads with grouped specs', async () => {
       await page.goto(BASE + '/specs', { waitUntil: 'networkidle2' });
@@ -185,6 +284,10 @@ async function main() {
       });
     });
 
+    await step('analytics: sign_up is logged', async () => {
+      await expectEvent(page, 'sign_up', (p) => p.method === 'password' && p.context === 'direct');
+    });
+
     await step('dashboard greets the signed-in user', async () => {
       await findByText(page, 'h1', /Hi /i);
       const body = await page.$eval('body', (b) => b.innerText);
@@ -200,9 +303,72 @@ async function main() {
       );
     });
 
-    // ---------- 5. Shop: reserve via the order form ----------
-    await step('open shop and launch the reserve form', async () => {
-      await page.goto(BASE + '/shop', { waitUntil: 'networkidle2' });
+    // ---------- 5. Store: browse the catalog, then reserve via the order form ----------
+    await step('home shows featured products + view all', async () => {
+      await page.goto(BASE + '/', { waitUntil: 'networkidle2' });
+      await findByText(page, 'a', /View all products/i, 10000);
+      await findByText(page, 'h3', /Starter Kit/i);
+    });
+
+    await step('analytics: featured list view, FAQ open and CTA tag', async () => {
+      await expectEvent(
+        page,
+        'view_item_list',
+        (p) => p.item_list_id === 'home_featured' && (p.items || []).length === 6
+      );
+      // Opening a <details data-track> fires `toggle` → faq_open with the question.
+      await page.evaluate(() => {
+        document.querySelector('details[data-track="faq"]').open = true;
+      });
+      await expectEvent(page, 'faq_open', (p) => typeof p.question === 'string' && p.question.length > 5);
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        clickByText(page, 'a', /View all products/i),
+      ]);
+      await expectEvent(
+        page,
+        'cta_click',
+        (p) => p.cta_id === 'featured_view_all' && p.link_url === '/products'
+      );
+    });
+
+    await step('storefront lists products across categories', async () => {
+      await page.goto(BASE + '/products', { waitUntil: 'networkidle2' });
+      await findByText(page, 'h3', /Robotics Add-on Kit/i, 10000);
+      await findByText(page, 'h3', /USB-C Cable/i);
+    });
+
+    await step('analytics: shop list view, search, select_item and view_item', async () => {
+      await expectEvent(
+        page,
+        'view_item_list',
+        (p) => p.item_list_id === 'shop_all' && (p.items || []).length >= 8
+      );
+      await typeInto(page, 'input[type="search"]', 'robot');
+      await expectEvent(page, 'search', (p) => p.search_term === 'robot' && p.results >= 1);
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        page.click('[data-testid="product-card"][data-slug="robotics-kit"]'),
+      ]);
+      await expectEvent(
+        page,
+        'select_item',
+        (p) => p.item_list_id === 'shop_all' && p.items?.[0]?.item_id === 'bitsflow-robotics-kit'
+      );
+      await expectEvent(
+        page,
+        'view_item',
+        (p) => p.currency === 'BDT' && p.value === 3200 && p.items?.[0]?.item_id === 'bitsflow-robotics-kit'
+      );
+    });
+
+    await step('available product shows Buy now', async () => {
+      await page.goto(BASE + '/products/robotics-kit', { waitUntil: 'networkidle2' });
+      await findByText(page, 'button', /Buy now/i, 10000);
+    });
+
+    await step('open board product page and launch the reserve form', async () => {
+      await page.goto(BASE + '/products/bitsflow-board', { waitUntil: 'networkidle2' });
       await clickByText(page, 'button', /Reserve \(no payment now\)/i);
       // modal appears
       await findByText(page, 'h2', /Reserve your Bitsflow/i);
@@ -222,10 +388,70 @@ async function main() {
       await findByText(page, 'div', /Reservation confirmed/i, 15000);
     });
 
+    await step('analytics: begin_checkout + reserve logged, and no PII anywhere', async () => {
+      await expectEvent(
+        page,
+        'begin_checkout',
+        (p) => p.order_type === 'reserve' && p.value === 4500 && p.currency === 'BDT'
+      );
+      await expectEvent(
+        page,
+        'reserve',
+        (p) =>
+          typeof p.transaction_id === 'string' &&
+          p.transaction_id.length > 5 &&
+          p.value === 4500 &&
+          p.items?.[0]?.item_id === 'bitsflow-v1'
+      );
+      const dump = JSON.stringify(await analyticsLog(page));
+      for (const secret of [CUST.email, '01712345678', '123 Test Road', 'Test School']) {
+        if (dump.includes(secret)) throw new Error(`PII leaked into analytics: "${secret}"`);
+      }
+    });
+
     // ---------- 6. Dashboard: order appears + cancel ----------
     await step('reserved order appears on dashboard', async () => {
       await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle2' });
-      await findByText(page, 'li', /Bitsflow Board ×1/i, 15000);
+      try {
+        await findByText(page, 'li', /Bitsflow Board ×1/i, 15000);
+      } catch (e) {
+        const why = await page.evaluate(() => ({
+          path: location.pathname,
+          h1: document.querySelector('h1')?.textContent,
+          items: [...document.querySelectorAll('li')]
+            .map((l) => (l.textContent || '').trim().slice(0, 60))
+            .filter((t) => /×|order|অর্ডার/i.test(t))
+            .slice(0, 6),
+          alert: document.querySelector('[role="alert"]')?.textContent,
+        }));
+        await page.screenshot({ path: SHOTS + 'fail-dashboard.png', fullPage: true });
+        // Evidence: (1) does a reload show it? (2) emulator ground truth.
+        await page.reload({ waitUntil: 'networkidle2' });
+        await sleep(4000);
+        why.afterReload = await page.evaluate(() => /Bitsflow Board ×1/.test(document.body.innerText));
+        try {
+          const H = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' };
+          const acct = await (
+            await fetch(
+              'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/bitsflow-21443/accounts:lookup',
+              { method: 'POST', headers: H, body: JSON.stringify({ email: [CUST.email] }) }
+            )
+          ).json();
+          why.authUids = (acct.users ?? []).map((u) => u.localId);
+          const ord = await (
+            await fetch(
+              'http://127.0.0.1:9080/v1/projects/bitsflow-21443/databases/(default)/documents/orders?pageSize=50',
+              { headers: H }
+            )
+          ).json();
+          why.ordersForEmail = (ord.documents ?? [])
+            .filter((d) => d.fields?.customerEmail?.stringValue === CUST.email)
+            .map((d) => ({ uid: d.fields.uid?.stringValue, created: d.fields.createdAt?.timestampValue }));
+        } catch (err) {
+          why.groundTruthError = String(err);
+        }
+        throw new Error(`${e.message} — ${JSON.stringify(why)}`);
+      }
       const body = await page.$eval('body', (b) => b.innerText);
       if (!/pending/i.test(body)) throw new Error('order not pending');
     });
@@ -237,6 +463,10 @@ async function main() {
       });
       await clickByText(page, 'button', /^Cancel$/i);
       await findByText(page, 'body', /cancelled/i, 15000);
+    });
+
+    await step('analytics: order_cancel logged', async () => {
+      await expectEvent(page, 'order_cancel', (p) => p.order_type === 'reserve' && p.value === 4500);
     });
 
     // ---------- 7. Admin gating for non-admin ----------
@@ -253,6 +483,74 @@ async function main() {
       // header should show Sign in again
       await page.goto(BASE + '/', { waitUntil: 'networkidle2' });
       await findByText(page, 'a', /Sign in/i, 10000);
+    });
+
+    await step('signed-out buyer returns to the product after signing in (?next)', async () => {
+      await page.goto(BASE + '/products/robotics-kit', { waitUntil: 'networkidle2' });
+      await sleep(800); // let auth resolve so the buy button is enabled
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        clickByText(page, 'button', /Buy now/i),
+      ]);
+      const url = new URL(page.url());
+      if (url.pathname !== '/login' || url.searchParams.get('next') !== '/products/robotics-kit')
+        throw new Error(`expected /login?next=/products/robotics-kit, got ${url.pathname}${url.search}`);
+      await typeInto(page, 'input[type="email"]', CUST.email);
+      await typeInto(page, 'input[type="password"]', CUST.pass);
+      await clickByText(page, 'button', /^Sign in$/i);
+      await page.waitForFunction(() => location.pathname === '/products/robotics-kit', {
+        timeout: 15000,
+      });
+    });
+
+    await step('order form pre-fills the address saved from the last order', async () => {
+      // This customer reserved earlier with 123 Test Road / Dhaka / 01712345678.
+      await sleep(800);
+      await clickByText(page, 'button', /Buy now/i);
+      await page.waitForSelector('[data-testid="saved-address-note"]', {
+        visible: true,
+        timeout: 15000,
+      });
+      const val = (ph) => page.$eval(`input[placeholder="${ph}"]`, (el) => el.value);
+      const got = {
+        name: await val('Your full name'),
+        phone: await val('01XXXXXXXXX'),
+        school: await val('Optional'),
+        line1: await val('House / road / area'),
+        city: await val('City'),
+        district: await val('District'),
+      };
+      const want = {
+        name: CUST.name,
+        phone: '01712345678',
+        school: 'Test School',
+        line1: '123 Test Road',
+        city: 'Dhaka',
+        district: 'Dhaka',
+      };
+      for (const k of Object.keys(want)) {
+        if (got[k] !== want[k]) throw new Error(`${k}: expected "${want[k]}", got "${got[k]}"`);
+      }
+      // "Use a different address" clears only the address, keeping contact details.
+      await page.click('[data-testid="use-different-address"]');
+      await page.waitForFunction(
+        () => document.querySelector('input[placeholder="House / road / area"]')?.value === ''
+      );
+      if ((await val('City')) !== '' || (await val('01XXXXXXXXX')) !== '01712345678')
+        throw new Error('"Use a different address" should clear the address but keep the phone');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
+      // Sign out so the admin journey starts clean.
+      await clickByText(page, 'button', /Sign out/i);
+      await sleep(1500);
+    });
+
+    await step('analytics: login-return funnel + pre-fill / abandon events', async () => {
+      await expectEvent(page, 'checkout_login_prompt', (p) => p.item_id === 'bitsflow-robotics-kit');
+      await expectEvent(page, 'login', (p) => p.method === 'password' && p.context === 'return');
+      await expectEvent(page, 'address_prefilled', (p) => p.order_type === 'order');
+      await expectEvent(page, 'use_different_address');
+      await expectEvent(page, 'checkout_abandon', (p) => p.order_type === 'order');
     });
 
     // ---------- 9. Admin journey ----------
@@ -306,6 +604,151 @@ async function main() {
       if (!/order(s)? total/i.test(body)) throw new Error('no order count shown');
     });
 
+    await step('analytics: admin pages are never tracked', async () => {
+      const adminHits = (await analyticsLog(page)).filter((e) => (e.path || '').startsWith('/admin'));
+      if (adminHits.length)
+        throw new Error(`admin pages logged ${adminHits.length} event(s): ${adminHits[0].name}`);
+    });
+
+    // ---------- 10. Admin: live product management ----------
+    const NEW_SLUG = `e2e-widget-${STAMP}`;
+    const ROW = `[data-testid="product-row"][data-slug="${NEW_SLUG}"]`;
+    const EDITOR = '[data-testid="product-editor"]';
+
+    await step('admin opens the product manager and seeds the live catalog', async () => {
+      await page.goto(BASE + '/admin/products', { waitUntil: 'networkidle2' });
+      await page.waitForFunction(
+        () =>
+          document.querySelector('[data-testid="product-row"]') ||
+          document.querySelector('[data-testid="seed-catalog"]'),
+        { timeout: 15000 }
+      );
+      // A fresh emulator has an empty catalog → seed it from the defaults.
+      if (await page.$('[data-testid="seed-catalog"]')) {
+        await page.click('[data-testid="seed-catalog"]');
+      }
+      await page.waitForFunction(
+        () => document.querySelectorAll('[data-testid="product-row"]').length >= 8,
+        { timeout: 20000 }
+      );
+    });
+
+    await step('admin creates a new product', async () => {
+      await page.click('[data-testid="new-product"]');
+      await page.waitForSelector(EDITOR, { visible: true });
+      await replaceInput(page, `${EDITOR} input[name="name"]`, 'E2E Widget');
+      await replaceInput(page, `${EDITOR} input[name="slug"]`, NEW_SLUG);
+      await replaceInput(page, `${EDITOR} input[name="price"]`, '777');
+      await page.select(`${EDITOR} select[name="status"]`, 'available');
+      await clickWhenEnabled(page, '[data-testid="save-product"]');
+      try {
+        await page.waitForSelector(ROW, { timeout: 15000 });
+      } catch {
+        const why = await page.evaluate(() => ({
+          editorOpen: !!document.querySelector('[data-testid="product-editor"]'),
+          editorError: document.querySelector('[data-testid="editor-error"]')?.textContent,
+          toast: document.querySelector('[data-testid="admin-toast"]')?.textContent,
+          dialogs: [...document.querySelectorAll('[role="dialog"],[role="alertdialog"]')].map(
+            (d) => d.getAttribute('data-testid')
+          ),
+          slug: document.querySelector('[data-testid="product-editor"] input[name="slug"]')?.value,
+        }));
+        await page.screenshot({ path: SHOTS + 'fail-create-product.png' });
+        throw new Error(`row never appeared — ${JSON.stringify(why)}`);
+      }
+    });
+
+    await step('new product appears on the live storefront', async () => {
+      await page.goto(BASE + '/products', { waitUntil: 'networkidle2' });
+      await page.waitForSelector(
+        `[data-testid="product-card"][data-slug="${NEW_SLUG}"]`,
+        { timeout: 15000 }
+      );
+    });
+
+    await step('new product page renders client-side with its live price', async () => {
+      await page.goto(BASE + `/products/view?slug=${NEW_SLUG}`, { waitUntil: 'networkidle2' });
+      await page.waitForSelector(
+        `[data-testid="product-detail"][data-slug="${NEW_SLUG}"]`,
+        { timeout: 15000 }
+      );
+      const price = await page.$eval('[data-testid="product-price"]', (el) => el.textContent || '');
+      if (!/777/.test(price)) throw new Error(`expected ৳777 on the page, got "${price}"`);
+    });
+
+    await step('order is charged the authoritative live (Firestore) price', async () => {
+      // This product exists ONLY in Firestore (no static fallback), so a
+      // successful order at ৳777 proves the server resolved the live price.
+      await clickByText(page, 'button', /Buy now/i);
+      await page.waitForSelector('[role="dialog"]', { visible: true });
+      // The admin has never ordered → nothing saved → no pre-fill.
+      await sleep(1200);
+      if (await page.$('[data-testid="saved-address-note"]'))
+        throw new Error('first-time buyer should not see a saved-address pre-fill');
+      await fillOrderForm(page, ADMIN.name);
+      await clickByText(page, 'button', /Place order/i);
+      await page.waitForSelector('[data-testid="order-success"]', { timeout: 15000 });
+      await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle2' });
+      const li = await findByText(page, 'li', /E2E Widget ×1/i, 15000);
+      const text = await li.evaluate((e) => e.textContent || '');
+      if (!/777/.test(text)) throw new Error(`order total is not ৳777: "${text.slice(0, 160)}"`);
+    });
+
+    await step('analytics: purchase logged with the live price', async () => {
+      await expectEvent(
+        page,
+        'purchase',
+        (p) =>
+          p.order_type === 'order' &&
+          p.value === 777 &&
+          p.currency === 'BDT' &&
+          typeof p.transaction_id === 'string' &&
+          p.items?.[0]?.item_id === NEW_SLUG
+      );
+    });
+
+    await step('admin price edit shows up live on the storefront', async () => {
+      await page.goto(BASE + '/admin/products', { waitUntil: 'networkidle2' });
+      await page.waitForSelector(ROW, { timeout: 15000 });
+      await page.click(`${ROW} [data-testid="edit-product"]`);
+      await page.waitForSelector(EDITOR, { visible: true });
+      await replaceInput(page, `${EDITOR} input[name="price"]`, '999');
+      await clickWhenEnabled(page, '[data-testid="save-product"]');
+      await findByText(page, '[data-testid="admin-toast"]', /Saved/i, 15000);
+      await page.goto(BASE + `/products/view?slug=${NEW_SLUG}`, { waitUntil: 'networkidle2' });
+      await page.waitForFunction(
+        () => /999/.test(document.querySelector('[data-testid="product-price"]')?.textContent || ''),
+        { timeout: 15000 }
+      );
+    });
+
+    await step('hiding a product takes it off the storefront', async () => {
+      await page.goto(BASE + '/admin/products', { waitUntil: 'networkidle2' });
+      await page.waitForSelector(`${ROW}[data-active="true"]`, { timeout: 15000 });
+      // The toggle is optimistic, so wait for the server to confirm the PATCH.
+      const patched = page.waitForResponse(
+        (r) =>
+          r.request().method() === 'PATCH' &&
+          r.url().includes(`/admin/products/${NEW_SLUG}`) &&
+          r.ok(),
+        { timeout: 15000 }
+      );
+      await page.click(`${ROW} [data-testid="toggle-active"]`);
+      await patched;
+      await page.waitForSelector(`${ROW}[data-active="false"]`, { timeout: 10000 });
+      await page.goto(BASE + `/products/view?slug=${NEW_SLUG}`, { waitUntil: 'networkidle2' });
+      await page.waitForSelector('[data-testid="product-unavailable"]', { timeout: 15000 });
+    });
+
+    await step('admin deletes the product', async () => {
+      await page.goto(BASE + '/admin/products', { waitUntil: 'networkidle2' });
+      await page.waitForSelector(ROW, { timeout: 15000 });
+      await page.click(`${ROW} [data-testid="delete-product"]`);
+      await page.waitForSelector('[data-testid="delete-dialog"]', { visible: true });
+      await page.click('[data-testid="confirm-delete"]');
+      await page.waitForFunction((sel) => !document.querySelector(sel), { timeout: 15000 }, ROW);
+    });
+
     // ---------- screenshots ----------
     await step('capture screenshots', async () => {
       const fs = await import('node:fs');
@@ -313,7 +756,8 @@ async function main() {
       for (const [name, path] of [
         ['home', '/'],
         ['specs', '/specs'],
-        ['shop', '/shop'],
+        ['shop', '/products'],
+        ['admin-products', '/admin/products'],
       ]) {
         await page.goto(BASE + path, { waitUntil: 'networkidle2' });
         await sleep(800);

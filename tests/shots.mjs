@@ -16,7 +16,7 @@ const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 2 });
 
 async function shot(name, lang) {
-  await page.goto(`${BASE}/`, { waitUntil: 'networkidle0' });
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle2' });
   if (lang === 'bn') {
     await page.evaluate(() => {
       document.documentElement.setAttribute('data-lang', 'bn');
