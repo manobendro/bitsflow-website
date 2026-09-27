@@ -20,6 +20,9 @@ ui-debug.log
 .env
 .env.*
 !.env.example
+# Not a secret (just PUBLIC_USE_EMULATORS=true) and required: without it a fresh
+# clone's `npm run dev` would talk to the PRODUCTION Firebase project.
+!.env.development
 functions/.env
 functions/.env.*
 !functions/.env.example
@@ -30,3 +33,10 @@ functions/.env.*
 .vscode/*
 !.vscode/extensions.json
 Thumbs.db
+
+# build output & test artifacts
+# functions/lib is compiled from functions/src — built fresh by the firebase.json
+# `predeploy` hook on every deploy, so it never goes stale in git.
+functions/lib/
+# Puppeteer screenshots — regenerated on every test run.
+tests/shots/
