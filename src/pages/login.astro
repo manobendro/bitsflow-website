@@ -1,6 +1,26 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AuthForm from '../components/react/AuthForm.tsx';
+import T from '../components/T.astro';
+import { PackageCheck, CalendarCheck, BookOpen } from 'lucide-astro';
+
+const perks = [
+  {
+    Icon: CalendarCheck,
+    en: 'Reserve and pre-book boards in a few taps',
+    bn: 'কয়েক ট্যাপেই বোর্ড রিজার্ভ বা প্রি-বুক করো',
+  },
+  {
+    Icon: PackageCheck,
+    en: 'Track every order, from confirmed to delivered',
+    bn: 'কনফার্ম থেকে ডেলিভারি — প্রতিটা অর্ডার ট্র্যাক করো',
+  },
+  {
+    Icon: BookOpen,
+    en: 'Pick up where you left off with tutorials',
+    bn: 'টিউটোরিয়ালে যেখানে থেমেছিলে, সেখান থেকেই শুরু করো',
+  },
+];
 ---
 
 <BaseLayout title="Sign in — Bitsflow" description="Sign in or create your Bitsflow account.">
@@ -14,8 +34,37 @@ import AuthForm from '../components/react/AuthForm.tsx';
       aria-hidden="true"
     >
     </div>
-    <div class="container-page grid place-items-center py-16 lg:py-24">
-      <AuthForm client:load />
+    <div
+      class="container-page grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24"
+    >
+      <!-- Form first in the DOM (the page's h1 lives inside AuthForm). -->
+      <div class="w-full">
+        <AuthForm client:load />
+      </div>
+
+      <!-- Friendly pitch: beside the form on desktop, under it on phones. -->
+      <div class="mx-auto w-full max-w-md lg:order-first lg:mx-0 lg:max-w-lg">
+        <p class="eyebrow">
+          <T en="Your Bitsflow account" bn="তোমার বিটসফ্লো অ্যাকাউন্ট" />
+        </p>
+        <p class="mt-2 text-2xl font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
+          <T en="One place for all your making" bn="তোমার সব বানানোর কাজ, এক জায়গায়" />
+        </p>
+        <ul class="mt-6 space-y-3">
+          {
+            perks.map((p) => (
+              <li class="flex items-start gap-3">
+                <span class="icon-tile h-9 w-9 shrink-0">
+                  <p.Icon size={18} stroke-width={1.9} />
+                </span>
+                <span class="pt-1.5 text-[15px] leading-relaxed text-ink-soft">
+                  <T en={p.en} bn={p.bn} />
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </section>
 </BaseLayout>

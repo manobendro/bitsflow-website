@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductDetail from '../../components/react/ProductDetail.tsx';
+import { CATEGORIES, getAllProducts, getProductBySlug } from '../../lib/catalog';
+
+// Pre-render a page per SEED product (SEO + instant paint). The island then
+// refreshes from the live Firestore catalog. Products created later in the
+// admin are served by /products/view instead (see productHref()).
+export function getStaticPaths() {
+  return getAllProducts().map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const product = getProductBySlug(slug!);
+if (!product) return Astro.redirect('/products');
+
+const site = Astro.site ?? new URL('https://bitsflow.cc');
+const url = new URL(`/products/${product.slug}`, site).href;
+const categoryLabel = CATEGORIES.find((c) => c.key === product.category)?.en ?? 'Products';
+
+const title = `${product.name} — Bitsflow Shop`;
+const description = product.descriptionEn
+  ? `${product.tagline}. ${product.descriptionEn}`.slice(0, 300)
+  : product.tagline;
+
+const AVAILABILITY = {
+  available: 'https://schema.org/InStock',
+  prebook: 'https://schema.org/PreOrder',
+  sold_out: 'https://schema.org/OutOfStock',
+} as const;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    alternateName: product.nameBn,
+    description: product.descriptionEn ?? product.tagline,
+    sku: product.id,
+    category: categoryLabel,
+    brand: { '@type': 'Brand', name: 'Bitsflow' },
+    ...(product.image ? { image: new URL(product.image, site).href } : {}),
+    url,
+    offers: {
+      '@type': 'Offer',
+      url,
+      priceCurrency: 'BDT',
+      price: product.price,
+      availability: AVAILABILITY[product.status],
+      itemCondition: 'https://schema.org/NewCondition',
+      areaServed: 'BD',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', site).href },
+      { '@type': 'ListItem', position: 2, name: 'Shop', item: new URL('/products', site).href },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: categoryLabel,
+        item: new URL(`/products?category=${product.category}`, site).href,
+      },
+      { '@type': 'ListItem', position: 4, name: product.name, item: url },
+    ],
+  },
+];
+// Escape "<" so product copy can never close the script tag.
+const jsonLdText = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+---
+
+<BaseLayout title={title} description={description} image={product.image}>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={jsonLdText} />
+  </Fragment>
+  <section class="container-page py-8 lg:py-12">
+    <ProductDetail client:load slug={product.slug} initialProduct={product} />
+  </section>
+</BaseLayout>

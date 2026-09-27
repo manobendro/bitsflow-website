@@ -1,16 +1,31 @@
 ---
 import AuthNav from './react/AuthNav.tsx';
 import LangToggle from './react/LangToggle.tsx';
-import { Hexagon } from 'lucide-astro';
+import T from './T.astro';
+import {
+  Hexagon,
+  Menu,
+  X,
+  Sparkles,
+  Palette,
+  Cpu,
+  ShoppingBag,
+  BookOpen,
+  ChevronRight,
+  ArrowRight,
+} from 'lucide-astro';
 
 const links = [
-  { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো' },
-  { href: '/#create', en: 'Create', bn: 'বানাও' },
-  { href: '/specs', en: 'Specs', bn: 'স্পেক' },
-  { href: '/shop', en: 'Shop', bn: 'কেনাকাটা' },
-  { href: '/blog', en: 'Blog', bn: 'ব্লগ' },
+  { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো', Icon: Sparkles },
+  { href: '/#create', en: 'Create', bn: 'বানাও', Icon: Palette },
+  { href: '/specs', en: 'Specs', bn: 'স্পেক', Icon: Cpu },
+  { href: '/products', en: 'Shop', bn: 'কেনাকাটা', Icon: ShoppingBag },
+  { href: '/blog', en: 'Blog', bn: 'ব্লগ', Icon: BookOpen },
 ];
 const path = Astro.url.pathname;
+// Stable analytics id per nav item, e.g. "Why Bitsflow" → nav_why_bitsflow.
+const navId = (en: string) =>
+  'nav_' + en.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 // Active when the link points at the current page. In-page anchors (e.g.
 // "/#why") are navigation within the home page, not a separate "page", so they
 // never take the active state. Real pages ("/specs", "/blog") also light up on
@@ -22,35 +37,54 @@ function isActive(href: string) {
 }
 ---
 
+<!--
+  Sticky site header.
+  - ≥lg: inline nav links + language toggle + auth.
+  - <lg: logo + auth + hamburger; links (and, below sm, the language toggle)
+    live in a slide-down panel. The breakpoint is lg rather than md because at
+    768px the five links + signed-in auth controls don't fit on one row.
+  - data-scrolled (set by the script below) adds a hairline + soft shadow once
+    the page has scrolled.
+-->
 <header
-  class="sticky top-0 z-50 border-b border-black/5 bg-paper/85 backdrop-blur"
+  id="site-header"
+  data-scrolled="false"
+  data-menu-open="false"
+  class="sticky top-0 z-50 border-b border-transparent bg-paper/85 backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-200 data-[menu-open=true]:border-black/5 data-[menu-open=true]:bg-paper data-[scrolled=true]:border-black/5 data-[scrolled=true]:shadow-[0_10px_30px_-18px_rgb(20_39_31/0.28)]"
 >
-  <nav class="container-page flex h-16 items-center justify-between gap-6">
+  <nav
+    aria-label="Main"
+    class="container-page flex h-16 items-center gap-2 sm:gap-3"
+  >
     <a
       href="/"
-      class="flex shrink-0 items-center gap-2.5 font-extrabold text-ink"
+      class="flex shrink-0 items-center gap-2.5 rounded-md font-extrabold text-ink"
+      aria-label="Bitsflow — home"
     >
       <span
-        class="grid h-9 w-9 place-items-center rounded-md bg-brand-600 text-white"
+        class="grid h-9 w-9 place-items-center rounded-md bg-brand-600 text-white shadow-sm shadow-brand-600/25"
         aria-hidden="true"
       >
-        <Hexagon size={18} strokeWidth={2.5} />
+        <Hexagon size={18} stroke-width={2.5} />
       </span>
-      <span class="text-lg leading-none tracking-tight">Bitsflow</span>
+      <span class="text-lg leading-none tracking-tight max-[340px]:sr-only">Bitsflow</span>
     </a>
 
-    <ul class="hidden items-center gap-1 md:flex">
+    <!-- Desktop links -->
+    <ul class="mx-auto hidden items-center gap-0.5 lg:flex">
       {
         links.map((l) => (
           <li>
             <a
               href={l.href}
+              data-track={navId(l.en)}
+              data-track-menu="desktop"
               aria-current={isActive(l.href) ? 'page' : undefined}
               class:list={[
-                'inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors',
+                'relative inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors',
                 isActive(l.href)
-                  ? 'text-brand-700'
-                  : 'text-ink-soft hover:text-brand-700',
+                  ? 'bg-brand-50 text-brand-700'
+                  : 'text-ink-soft hover:bg-sand hover:text-ink',
               ]}
             >
               <span class="lang-en">{l.en}</span><span class="lang-bn" lang="bn">{l.bn}</span>
@@ -60,9 +94,226 @@ function isActive(href: string) {
       }
     </ul>
 
-    <div class="flex shrink-0 items-center gap-2.5">
-      <LangToggle client:load />
+    <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-2.5 lg:ml-0">
+      <!-- Header-bar language toggle (moves into the menu panel below sm). -->
+      <div class="hidden sm:block">
+        <LangToggle client:load />
+      </div>
       <AuthNav client:load />
+      <button
+        type="button"
+        id="menu-toggle"
+        class="menu-toggle relative grid h-10 w-10 shrink-0 sm:h-9 sm:w-9 place-items-center rounded-md border border-black/10 bg-white/70 text-ink transition-colors after:absolute after:-inset-1 after:content-[''] hover:bg-sand aria-expanded:border-brand-200 aria-expanded:bg-brand-50 aria-expanded:text-brand-700 lg:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Menu"
+        data-label-en="Menu"
+        data-label-bn="মেনু"
+      >
+        <Menu size={20} class="menu-icon-open" aria-hidden="true" />
+        <X size={20} class="menu-icon-close" aria-hidden="true" />
+      </button>
+    </div>
+
+    <!-- Dim the page behind the open panel; a click here closes the menu. -->
+    <div
+      id="menu-backdrop"
+      class="menu-backdrop absolute inset-x-0 top-full h-[100dvh] bg-ink/25 lg:hidden"
+      data-open="false"
+      aria-hidden="true"
+    >
+    </div>
+
+    <!-- Mobile / tablet slide-down panel -->
+    <div
+      id="mobile-menu"
+      class="mobile-menu absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-b border-black/5 bg-paper shadow-[0_24px_40px_-24px_rgb(20_39_31/0.35)] lg:hidden"
+      data-open="false"
+    >
+      <div class="container-page pb-6 pt-3">
+        <ul class="grid gap-1">
+          {
+            links.map((l) => (
+              <li>
+                <a
+                  href={l.href}
+                  data-menu-link
+                  data-track={navId(l.en)}
+                  data-track-menu="mobile"
+                  aria-current={isActive(l.href) ? 'page' : undefined}
+                  class:list={[
+                    'group flex min-h-12 items-center gap-3 rounded-md px-3 text-base font-semibold transition-colors',
+                    isActive(l.href)
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-ink hover:bg-sand',
+                  ]}
+                >
+                  <span
+                    class:list={[
+                      'grid h-8 w-8 shrink-0 place-items-center rounded-md',
+                      isActive(l.href)
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-brand-50 text-brand-700',
+                    ]}
+                    aria-hidden="true"
+                  >
+                    <l.Icon size={17} stroke-width={2} />
+                  </span>
+                  <span class="flex-1">
+                    <span class="lang-en">{l.en}</span><span class="lang-bn" lang="bn">{l.bn}</span>
+                  </span>
+                  <ChevronRight
+                    size={18}
+                    class="text-ink-soft/50 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <!-- Language (only needed here below sm; the bar shows it from sm up). -->
+        <div class="mt-4 border-t border-black/5 pt-4 sm:hidden">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft">
+            <T en="Language" bn="ভাষা" />
+          </p>
+          <LangToggle client:load variant="block" />
+        </div>
+
+        <a
+          href="/products/bitsflow-board"
+          data-menu-link
+          data-track="menu_prebook"
+          class="btn btn-primary mt-4 min-h-12 w-full"
+        >
+          <T en="Pre-book the board" bn="বোর্ডটা প্রি-বুক করো" />
+          <ArrowRight size={18} aria-hidden="true" />
+        </a>
+      </div>
     </div>
   </nav>
 </header>
+
+<script>
+  import { track } from '../lib/analytics';
+
+  const header = document.getElementById('site-header');
+  const toggle = document.getElementById('menu-toggle') as HTMLButtonElement | null;
+  const panel = document.getElementById('mobile-menu');
+  const backdrop = document.getElementById('menu-backdrop');
+  const root = document.documentElement;
+
+  // --- Scrolled state: hairline + shadow once the page moves. ---------------
+  if (header) {
+    let ticking = false;
+    const update = () => {
+      header.dataset.scrolled = String(window.scrollY > 4);
+      ticking = false;
+    };
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true }
+    );
+    update();
+  }
+
+  // --- Mobile menu ------------------------------------------------------------
+  if (header && toggle && panel && backdrop) {
+    const focusables = () =>
+      Array.from(
+        panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+      );
+    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+
+    const setOpen = (open: boolean, focusButton = false) => {
+      if (open && !isOpen()) track('menu_open', { viewport: window.innerWidth < 640 ? 'mobile' : 'tablet' });
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.dataset.open = String(open);
+      backdrop.dataset.open = String(open);
+      header.dataset.menuOpen = String(open);
+      if (open) {
+        // Lock scroll without the page jumping sideways on desktop scrollbars.
+        const gap = window.innerWidth - root.clientWidth;
+        if (gap > 0) document.body.style.paddingRight = `${gap}px`;
+        root.classList.add('menu-open');
+      } else {
+        root.classList.remove('menu-open');
+        document.body.style.paddingRight = '';
+        if (focusButton) toggle.focus();
+      }
+    };
+
+    toggle.addEventListener('click', (e) => {
+      const opening = !isOpen();
+      setOpen(opening);
+      // Keyboard activation (Enter/Space → detail 0): move into the panel.
+      if (opening && e.detail === 0) focusables()[0]?.focus();
+    });
+
+    // Close after choosing a link (also covers in-page anchors like /#why).
+    panel.querySelectorAll('[data-menu-link]').forEach((a) =>
+      a.addEventListener('click', () => setOpen(false))
+    );
+
+    // Outside click / tap (backdrop, page, or the header bar itself).
+    document.addEventListener('click', (e) => {
+      if (!isOpen()) return;
+      const t = e.target as Node;
+      if (panel.contains(t) || toggle.contains(t)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false, true);
+        return;
+      }
+      // Keep Tab cycling between the toggle and the panel while open.
+      if (e.key === 'Tab') {
+        const items = [toggle, ...focusables()];
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (!active || !items.includes(active)) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // Growing past the breakpoint (rotate / resize) closes the panel.
+    const desktop = window.matchMedia('(min-width: 64rem)');
+    desktop.addEventListener('change', (e) => {
+      if (e.matches && isOpen()) setOpen(false);
+    });
+
+    // Localise the button's accessible name with the active language.
+    const syncLabel = () => {
+      const bn = root.getAttribute('data-lang') === 'bn';
+      toggle.setAttribute(
+        'aria-label',
+        (bn ? toggle.dataset.labelBn : toggle.dataset.labelEn) ?? 'Menu'
+      );
+    };
+    syncLabel();
+    new MutationObserver(syncLabel).observe(root, {
+      attributes: true,
+      attributeFilter: ['data-lang'],
+    });
+  }
+</script>

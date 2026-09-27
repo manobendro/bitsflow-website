@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import T from '../components/T.astro';
+import { House, ShoppingBag, Compass, Cpu, BookOpen, CircleHelp } from 'lucide-astro';
+
+// A "?" drawn on the board's 5×5 matrix — row by row.
+//   . # # # .
+//   # . . . #
+//   . . # # .
+//   . . . . .
+//   . . # . .
+const lit = [1, 2, 3, 5, 9, 12, 13];
+const dot = 22; // the question-mark dot, in flag red
+
+const helpful = [
+  { href: '/specs', en: 'Tech specs', bn: 'টেক স্পেক', Icon: Cpu },
+  { href: '/blog', en: 'Tutorials & blog', bn: 'টিউটোরিয়াল ও ব্লগ', Icon: BookOpen },
+  { href: '/#faq', en: 'Common questions', bn: 'সাধারণ প্রশ্ন', Icon: CircleHelp },
+];
+---
+
+<BaseLayout
+  title="Page not found — Bitsflow"
+  description="We couldn’t find that page. Head back home or browse the Bitsflow shop."
+>
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 via-paper to-paper"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -left-20 top-24 -z-10 h-64 w-64 rounded-full bg-accent-300/20 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="container-page grid place-items-center py-14 text-center sm:py-20 lg:py-28">
+      <!-- The board, confused. -->
+      <div
+        class="reveal stagger-1 grid grid-cols-5 gap-2 rounded-lg bg-ink p-4 shadow-[var(--shadow-lift)] sm:gap-2.5 sm:p-5"
+        aria-hidden="true"
+      >
+        {
+          Array.from({ length: 25 }, (_, i) => (
+            <span
+              class:list={[
+                'h-5 w-5 rounded-[2px] sm:h-6 sm:w-6',
+                i === dot
+                  ? 'led-blink bg-accent-500 shadow-[0_0_12px_rgb(244_42_65/0.75)]'
+                  : lit.includes(i)
+                    ? 'bg-brand-300 shadow-[0_0_12px_rgb(91_183_149/0.7)]'
+                    : 'bg-white/10',
+              ]}
+            />
+          ))
+        }
+      </div>
+
+      <p class="reveal stagger-2 mt-8 chip border border-brand-200 bg-white text-brand-700">
+        <Compass size={14} aria-hidden="true" />
+        <T en="Error 404" bn="এরর ৪০৪" />
+      </p>
+      <h1
+        class="reveal stagger-3 mt-4 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl"
+      >
+        <T en="Oops — this page wandered off." bn="উফ! পেজটা কোথায় যেন হারিয়ে গেছে।" />
+      </h1>
+      <p class="reveal stagger-4 mt-4 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
+        <T
+          en="The link might be old, or there may be a small typo. No worries — let’s get you back to making something."
+          bn="লিংকটা হয়তো পুরনো, কিংবা কোথাও একটু টাইপো হয়েছে। চিন্তা নেই — চলো, আবার বানানোর কাজে ফিরে যাই।"
+        />
+      </p>
+      <div
+        class="reveal stagger-5 mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center"
+      >
+        <a href="/" class="btn btn-primary btn-lg">
+          <House size={18} aria-hidden="true" />
+          <T en="Back to home" bn="হোমে ফিরে যাও" />
+        </a>
+        <a href="/products" class="btn btn-secondary btn-lg">
+          <ShoppingBag size={18} aria-hidden="true" />
+          <T en="Visit the shop" bn="দোকানে ঘুরে এসো" />
+        </a>
+      </div>
+
+      <nav aria-label="Helpful links" class="mt-12 w-full max-w-xl border-t border-black/5 pt-8">
+        <p class="text-sm font-semibold text-ink">
+          <T en="Or try one of these:" bn="অথবা এগুলো দেখে নাও:" />
+        </p>
+        <ul class="mt-4 grid gap-2 sm:grid-cols-3">
+          {
+            helpful.map((h) => (
+              <li>
+                <a
+                  href={h.href}
+                  class="flex min-h-11 items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-3 text-sm font-medium text-ink-soft transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                >
+                  <h.Icon size={16} aria-hidden="true" />
+                  <T en={h.en} bn={h.bn} />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* The red "dot" blinks gently, like a status LED. Off for reduced motion. */
+  .led-blink {
+    animation: led-blink 2.4s ease-in-out infinite;
+  }
+  @keyframes led-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .led-blink {
+      animation: none;
+    }
+  }
+</style>

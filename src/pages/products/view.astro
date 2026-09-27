@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductDetail from '../../components/react/ProductDetail.tsx';
+
+// Client-rendered detail page for products created in the admin after the last
+// build (they have no pre-rendered /products/<slug> page). The island reads the
+// slug from `?slug=` or the URL path — production rewrites `/products/**` here
+// for any path without a static file. "view" is a reserved slug.
+// The island shows a loading skeleton, then sets document.title once loaded.
+---
+
+<BaseLayout
+  title="Product — Bitsflow Shop"
+  description="Bitsflow shop — boards, kits and accessories delivered across Bangladesh."
+>
+  <Fragment slot="head">
+    <meta name="robots" content="noindex, follow" />
+  </Fragment>
+  <section class="container-page py-8 lg:py-12">
+    <ProductDetail client:load slug="" initialProduct={null} />
+  </section>
+</BaseLayout>

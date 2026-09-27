@@ -3,6 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero3D from '../components/react/Hero3D.tsx';
 import T from '../components/T.astro';
 import Flag from '../components/Flag.astro';
+import ProductGrid from '../components/react/ProductGrid.tsx';
+import { getFeaturedProducts } from '../lib/catalog';
 import { formatBDT } from '../lib/format';
 import {
   Palette,
@@ -22,6 +24,8 @@ import {
   Plus,
   Check,
   Heart,
+  ShoppingBag,
+  BookOpen,
 } from 'lucide-astro';
 
 // When you add the real model, set this to '/models/bitsflow.glb'.
@@ -189,6 +193,7 @@ const faqs = [
 ];
 
 const launchPrice = 4500; // BDT — placeholder, edit freely
+const featured = getFeaturedProducts();
 
 const levelLabel: Record<string, { en: string; bn: string }> = {
   Beginner: { en: 'Beginner', bn: 'নতুন' },
@@ -256,7 +261,8 @@ const levelStyle: Record<string, string> = {
         </p>
         <div class="reveal stagger-4 mt-8 flex flex-wrap items-center gap-4">
           <a
-            href="/shop"
+            href="/products/bitsflow-board"
+            data-track="hero_start_creating"
             class="group inline-flex items-center gap-2 rounded-md bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30"
           >
             <T en="Start creating" bn="বানানো শুরু করো" /> — {formatBDT(launchPrice)}
@@ -264,6 +270,7 @@ const levelStyle: Record<string, string> = {
           </a>
           <a
             href="/#create"
+            data-track="hero_see_what_you_can_build"
             class="rounded-md border border-brand-200 bg-white px-6 py-3.5 text-base font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
           >
             <T en="See what you can build" bn="কী কী বানানো যায়, দেখো" />
@@ -292,94 +299,130 @@ const levelStyle: Record<string, string> = {
   </section>
 
   <!-- TRUST STRIP -->
-  <section class="border-y border-black/5 bg-sand">
-    <div
-      class="container-page flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6 text-sm font-medium text-ink-soft"
+  <section class="border-y border-black/5 bg-sand" aria-label="Highlights">
+    <ul
+      class="container-page grid grid-cols-2 gap-x-4 gap-y-3 py-5 text-[13px] font-medium text-ink-soft sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-8 sm:py-6 sm:text-sm"
     >
-      <span class="inline-flex items-center gap-1.5">
-        <Check size={15} class="text-brand-600" />
+      <li class="flex items-start gap-1.5 sm:items-center">
+        <Check size={15} class="mt-0.5 shrink-0 text-brand-600 sm:mt-0" aria-hidden="true" />
         <T en="Code in blocks, Python or JavaScript" bn="ব্লক, পাইথন বা JavaScript-এ কোড করো" />
-      </span>
-      <span class="inline-flex items-center gap-1.5">
-        <Check size={15} class="text-brand-600" />
+      </li>
+      <li class="flex items-start gap-1.5 sm:items-center">
+        <Check size={15} class="mt-0.5 shrink-0 text-brand-600 sm:mt-0" aria-hidden="true" />
         <T en="Loved in classrooms" bn="ক্লাসরুমে দারুণ জনপ্রিয়" />
-      </span>
-      <span class="inline-flex items-center gap-1.5">
-        <Check size={15} class="text-brand-600" />
+      </li>
+      <li class="flex items-start gap-1.5 sm:items-center">
+        <Check size={15} class="mt-0.5 shrink-0 text-brand-600 sm:mt-0" aria-hidden="true" />
         <T en="Beginner-friendly" bn="নতুনদের জন্য সহজ" />
-      </span>
-      <span class="inline-flex items-center gap-1.5">
-        <Check size={15} class="text-brand-600" />
+      </li>
+      <li class="flex items-start gap-1.5 sm:items-center">
+        <Check size={15} class="mt-0.5 shrink-0 text-brand-600 sm:mt-0" aria-hidden="true" />
         <T en="Build in minutes" bn="মিনিটেই বানিয়ে ফেলো" />
-      </span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- FEATURED PRODUCTS -->
+  <section class="section" aria-labelledby="featured-title">
+    <div class="container-page">
+      <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div class="max-w-2xl">
+          <p class="eyebrow">
+            <ShoppingBag size={15} aria-hidden="true" />
+            <T en="Shop the range" bn="আমাদের পণ্য" />
+          </p>
+          <h2 id="featured-title" class="section-title">
+            <T
+              en="Everything to build with Bitsflow"
+              bn="বিটসফ্লো দিয়ে বানানোর সব কিছু"
+            />
+          </h2>
+          <p class="section-lede">
+            <T
+              en="Start with the board, then add kits and accessories made for it."
+              bn="বোর্ড দিয়ে শুরু করো, তারপর এর জন্যই বানানো কিট আর অ্যাক্সেসরি যোগ করো।"
+            />
+          </p>
+        </div>
+        <a href="/products" data-track="featured_view_all" class="btn btn-secondary shrink-0 self-start sm:self-auto">
+          <T en="View all products" bn="সব পণ্য দেখো" />
+          <ArrowRight size={18} aria-hidden="true" />
+        </a>
+      </div>
+      <div class="mt-10 sm:mt-12">
+        <!-- Live from Firestore; server-renders the seed featured set first. -->
+        <ProductGrid client:load mode="featured" initialProducts={featured} />
+      </div>
     </div>
   </section>
 
   <!-- WHY BITSFLOW -->
-  <section id="why" class="container-page py-16 lg:py-24">
-    <div class="mx-auto max-w-2xl text-center">
-      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
-        <T en="Why Bitsflow" bn="কেন বিটসফ্লো" />
-      </p>
-      <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-        <T en="Learning to code should feel like play" bn="কোড শেখাটা হোক খেলার মতোই মজার" />
-      </h2>
-      <p class="mt-4 text-lg text-ink-soft">
-        <T
-          en="Most boards hide your work behind a screen of text. Bitsflow puts it right in your hands — colorful, physical, and impossible to put down."
-          bn="বেশির ভাগ বোর্ডে তোমার কাজ টেক্সটের স্ক্রিনের পেছনেই লুকিয়ে থাকে। বিটসফ্লো সেটা তুলে দেয় তোমার হাতের মুঠোয় — রঙিন, ছুঁয়ে দেখা যায়, আর একবার ধরলে হাত থেকে নামাতেই ইচ্ছে করে না।"
-        />
-      </p>
-    </div>
-    <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
-      {
-        why.map((w) => (
-          <div class="card-soft p-7">
-            <div class="icon-tile h-14 w-14">
-              <w.Icon size={26} strokeWidth={1.75} />
+  <section id="why" class="section bg-sand" aria-labelledby="why-title">
+    <div class="container-page">
+      <div class="mx-auto max-w-2xl text-center">
+        <p class="eyebrow">
+          <T en="Why Bitsflow" bn="কেন বিটসফ্লো" />
+        </p>
+        <h2 id="why-title" class="section-title">
+          <T en="Learning to code should feel like play" bn="কোড শেখাটা হোক খেলার মতোই মজার" />
+        </h2>
+        <p class="section-lede">
+          <T
+            en="Most boards hide your work behind a screen of text. Bitsflow puts it right in your hands — colorful, physical, and impossible to put down."
+            bn="বেশির ভাগ বোর্ডে তোমার কাজ টেক্সটের স্ক্রিনের পেছনেই লুকিয়ে থাকে। বিটসফ্লো সেটা তুলে দেয় তোমার হাতের মুঠোয় — রঙিন, ছুঁয়ে দেখা যায়, আর একবার ধরলে হাত থেকে নামাতেই ইচ্ছে করে না।"
+          />
+        </p>
+      </div>
+      <div class="scroll-reveal mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
+        {
+          why.map((w) => (
+            <div class="card-soft p-6 sm:p-7">
+              <div class="icon-tile h-12 w-12 sm:h-14 sm:w-14">
+                <w.Icon size={26} stroke-width={1.75} />
+              </div>
+              <h3 class="mt-5 text-lg font-bold leading-snug sm:text-xl">
+                <T en={w.title} bn={w.titleBn} />
+              </h3>
+              <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                <T en={w.body} bn={w.bodyBn} />
+              </p>
             </div>
-            <h3 class="mt-5 text-xl font-bold">
-              <T en={w.title} bn={w.titleBn} />
-            </h3>
-            <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
-              <T en={w.body} bn={w.bodyBn} />
-            </p>
-          </div>
-        ))
-      }
+          ))
+        }
+      </div>
     </div>
   </section>
 
   <!-- WHAT YOU CAN CREATE -->
-  <section id="create" class="bg-sand">
-    <div class="container-page py-16 lg:py-24">
+  <section id="create" class="section" aria-labelledby="create-title">
+    <div class="container-page">
       <div class="mx-auto max-w-2xl text-center">
-        <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <p class="eyebrow">
           <T en="What you can create" bn="কী কী বানাতে পারো" />
         </p>
-        <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <h2 id="create-title" class="section-title">
           <T en="From your first blink to your first robot" bn="প্রথম আলো জ্বালানো থেকে প্রথম রোবট" />
         </h2>
-        <p class="mt-4 text-lg text-ink-soft">
+        <p class="section-lede">
           <T
             en="Here are just a few of the things makers build with Bitsflow. Pick one and you could be running it tonight."
             bn="বিটসফ্লো দিয়ে মেকাররা যেসব বানায়, তার কয়েকটা এখানে। যেকোনো একটা বেছে নাও — আজ রাতেই চালু করে ফেলতে পারো।"
           />
         </p>
       </div>
-      <div class="scroll-reveal mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="scroll-reveal mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
         {
           creations.map((c) => (
-            <div class="card-soft p-6">
-              <div class="flex items-start justify-between">
-                <div class="icon-tile h-14 w-14">
-                  <c.Icon size={26} strokeWidth={1.75} />
+            <div class="card-soft flex flex-col p-6">
+              <div class="flex items-start justify-between gap-3">
+                <div class="icon-tile h-12 w-12 sm:h-14 sm:w-14">
+                  <c.Icon size={26} stroke-width={1.75} />
                 </div>
                 <span class={`chip ${levelStyle[c.level]}`}>
                   <T en={levelLabel[c.level].en} bn={levelLabel[c.level].bn} />
                 </span>
               </div>
-              <h3 class="mt-5 text-xl font-bold">
+              <h3 class="mt-5 text-lg font-bold leading-snug sm:text-xl">
                 <T en={c.title} bn={c.titleBn} />
               </h3>
               <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
@@ -389,77 +432,90 @@ const levelStyle: Record<string, string> = {
           ))
         }
       </div>
-      <div class="mt-12 text-center">
-        <a
-          href="/blog"
-          class="inline-flex items-center gap-2 rounded-md border border-brand-200 bg-white px-6 py-3 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
-        >
+      <div class="mt-10 flex justify-center sm:mt-12">
+        <a href="/blog" data-track="create_explore_tutorials" class="btn btn-secondary btn-lg w-full sm:w-auto">
+          <BookOpen size={18} aria-hidden="true" />
           <T en="Explore project tutorials" bn="প্রজেক্ট টিউটোরিয়াল ঘুরে দেখো" />
-          <ArrowRight size={18} />
+          <ArrowRight size={18} aria-hidden="true" />
         </a>
       </div>
     </div>
   </section>
 
   <!-- YOUR JOURNEY / HOW IT HELPS -->
-  <section id="journey" class="container-page py-16 lg:py-24">
-    <div class="mx-auto max-w-2xl text-center">
-      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
-        <T en="How it helps you grow" bn="কীভাবে তোমাকে এগিয়ে নেয়" />
-      </p>
-      <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-        <T en="One board for your whole coding journey" bn="পুরো কোডিং পথটার জন্য একটাই বোর্ড" />
-      </h2>
-      <p class="mt-4 text-lg text-ink-soft">
-        <T
-          en="You don’t outgrow Bitsflow — you grow into it. Start where you’re comfortable and level up when you’re ready."
-          bn="বিটসফ্লোকে তুমি ছাড়িয়ে যাবে না — বরং এর সাথেই বড় হবে। যেখানে স্বচ্ছন্দ, সেখান থেকেই শুরু করো; তৈরি হলে পরের ধাপে এগিয়ে যাও।"
-        />
-      </p>
-    </div>
-    <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
-      {
-        journey.map((j) => (
-          <div class="card-soft border-l-4 border-l-brand-500 p-7">
-            <span class="grid h-11 w-11 place-items-center rounded-md bg-brand-600 text-lg font-extrabold text-white">
-              {j.step}
-            </span>
-            <h3 class="mt-4 text-xl font-bold">
-              <T en={j.title} bn={j.titleBn} />
-            </h3>
-            <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
-              <T en={j.body} bn={j.bodyBn} />
-            </p>
-          </div>
-        ))
-      }
+  <section id="journey" class="section bg-sand" aria-labelledby="journey-title">
+    <div class="container-page">
+      <div class="mx-auto max-w-2xl text-center">
+        <p class="eyebrow">
+          <T en="How it helps you grow" bn="কীভাবে তোমাকে এগিয়ে নেয়" />
+        </p>
+        <h2 id="journey-title" class="section-title">
+          <T en="One board for your whole coding journey" bn="পুরো কোডিং পথটার জন্য একটাই বোর্ড" />
+        </h2>
+        <p class="section-lede">
+          <T
+            en="You don’t outgrow Bitsflow — you grow into it. Start where you’re comfortable and level up when you’re ready."
+            bn="বিটসফ্লোকে তুমি ছাড়িয়ে যাবে না — বরং এর সাথেই বড় হবে। যেখানে স্বচ্ছন্দ, সেখান থেকেই শুরু করো; তৈরি হলে পরের ধাপে এগিয়ে যাও।"
+          />
+        </p>
+      </div>
+      <ol class="scroll-reveal mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
+        {
+          journey.map((j, i) => (
+            <li class="card-soft relative overflow-hidden p-6 sm:p-7">
+              <span
+                class="absolute inset-x-0 top-0 h-1 bg-brand-500"
+                style={`opacity: ${0.45 + i * 0.275}`}
+                aria-hidden="true"
+              />
+              <div class="flex items-center gap-3">
+                <span class="grid h-11 w-11 place-items-center rounded-md bg-brand-600 text-lg font-extrabold text-white">
+                  {j.step}
+                </span>
+                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft">
+                  <T en={`Step ${i + 1} of 3`} bn={`ধাপ ${['১', '২', '৩'][i]} / ৩`} />
+                </span>
+              </div>
+              <h3 class="mt-4 text-lg font-bold leading-snug sm:text-xl">
+                <T en={j.title} bn={j.titleBn} />
+              </h3>
+              <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                <T en={j.body} bn={j.bodyBn} />
+              </p>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </section>
 
   <!-- WHO IT'S FOR -->
-  <section>
-    <div class="container-page py-16 lg:py-24">
+  <section class="section" aria-labelledby="who-title">
+    <div class="container-page">
       <div class="mx-auto max-w-2xl text-center">
-        <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <p class="eyebrow">
+          <Heart size={15} aria-hidden="true" />
           <T en="Who it's for" bn="কাদের জন্য" />
         </p>
-        <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <h2 id="who-title" class="section-title">
           <T en="Made for everyone who loves to make" bn="যারা বানাতে ভালোবাসে, সবার জন্যই" />
         </h2>
       </div>
-      <div class="scroll-reveal mt-12 grid gap-6 md:grid-cols-3">
+      <div class="scroll-reveal mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
         {
           audiences.map((a) => (
-            <div class="card-soft p-7 text-center">
-              <div class="icon-tile mx-auto h-16 w-16">
-                <a.Icon size={30} strokeWidth={1.75} />
+            <div class="card-soft flex gap-4 p-6 text-left sm:p-7 md:flex-col md:items-center md:text-center">
+              <div class="icon-tile h-12 w-12 shrink-0 md:h-16 md:w-16">
+                <a.Icon size={28} stroke-width={1.75} />
               </div>
-              <h3 class="mt-4 text-xl font-bold">
-                <T en={a.title} bn={a.titleBn} />
-              </h3>
-              <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
-                <T en={a.body} bn={a.bodyBn} />
-              </p>
+              <div>
+                <h3 class="text-lg font-bold leading-snug sm:text-xl md:mt-1">
+                  <T en={a.title} bn={a.titleBn} />
+                </h3>
+                <p class="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                  <T en={a.body} bn={a.bodyBn} />
+                </p>
+              </div>
             </div>
           ))
         }
@@ -468,46 +524,60 @@ const levelStyle: Record<string, string> = {
   </section>
 
   <!-- FAQ -->
-  <section id="faq" class="bg-sand">
-    <div class="container-page py-16 lg:py-24">
-    <div class="mx-auto max-w-3xl">
-      <h2 class="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
-        <T en="Questions, answered" bn="মনে প্রশ্ন? উত্তর এখানে" />
-      </h2>
-      <div class="mt-10 space-y-3">
-        {
-          faqs.map((f) => (
-            <details class="group rounded-lg border border-black/5 bg-white p-5 shadow-[0_1px_2px_rgb(20_39_31_/_0.04)] transition open:shadow-[0_8px_24px_-12px_rgb(20_39_31_/_0.12)]">
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-semibold">
-                <T en={f.q} bn={f.qBn} />
-                <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-brand-50 text-brand-600 transition group-open:rotate-45 group-open:bg-brand-600 group-open:text-white">
-                  <Plus size={18} />
-                </span>
-              </summary>
-              <p class="mt-3 text-[15px] leading-relaxed text-ink-soft">
-                <T en={f.a} bn={f.aBn} />
-              </p>
-            </details>
-          ))
-        }
+  <section id="faq" class="section bg-sand" aria-labelledby="faq-title">
+    <div class="container-page">
+      <div class="mx-auto max-w-3xl">
+        <div class="text-center">
+          <p class="eyebrow">
+            <T en="FAQ" bn="সাধারণ প্রশ্ন" />
+          </p>
+          <h2 id="faq-title" class="section-title">
+            <T en="Questions, answered" bn="মনে প্রশ্ন? উত্তর এখানে" />
+          </h2>
+        </div>
+        <div class="mt-10 space-y-3">
+          {
+            faqs.map((f) => (
+              <details
+                data-track="faq"
+                data-track-event="faq_open"
+                data-track-question={f.q}
+                class="group rounded-lg border border-black/5 bg-white shadow-[0_1px_2px_rgb(20_39_31_/_0.04)] transition-shadow open:shadow-[0_8px_24px_-12px_rgb(20_39_31_/_0.12)]"
+              >
+                <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-4 text-base font-semibold sm:text-[17px] [&::-webkit-details-marker]:hidden">
+                  <T en={f.q} bn={f.qBn} />
+                  <span
+                    class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand-50 text-brand-600 transition group-open:rotate-45 group-open:bg-brand-600 group-open:text-white motion-reduce:transition-none"
+                    aria-hidden="true"
+                  >
+                    <Plus size={18} />
+                  </span>
+                </summary>
+                <p class="px-5 pb-5 text-[15px] leading-relaxed text-ink-soft">
+                  <T en={f.a} bn={f.aBn} />
+                </p>
+              </details>
+            ))
+          }
+        </div>
+        <p class="mt-8 text-center text-sm text-ink-soft">
+          <T en="Want the nuts and bolts?" bn="খুঁটিনাটি জানতে চাও?" />{' '}
+          <a
+            href="/specs"
+            data-track="faq_full_specs"
+            class="inline-flex min-h-9 items-center gap-1 font-semibold text-brand-700 hover:underline"
+          >
+            <T en="See the full tech specs" bn="পুরো টেক স্পেক দেখে নাও" /> <ArrowRight size={14} aria-hidden="true" />
+          </a>
+        </p>
       </div>
-      <p class="mt-8 text-center text-sm text-ink-soft">
-        <T en="Want the nuts and bolts?" bn="খুঁটিনাটি জানতে চাও?" />{' '}
-        <a
-          href="/specs"
-          class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline"
-        >
-          <T en="See the full tech specs" bn="পুরো টেক স্পেক দেখে নাও" /> <ArrowRight size={14} />
-        </a>
-      </p>
-    </div>
     </div>
   </section>
 
   <!-- CTA -->
-  <section class="container-page py-16 lg:py-20">
+  <section class="container-page py-14 sm:py-20" aria-labelledby="cta-title">
     <div
-      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-8 py-14 text-center text-white"
+      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-6 py-12 text-center text-white sm:px-12 sm:py-16"
     >
       <div
         class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
@@ -519,25 +589,45 @@ const levelStyle: Record<string, string> = {
         aria-hidden="true"
       >
       </div>
-      <h2 class="relative text-3xl font-extrabold tracking-tight sm:text-4xl">
+      <!-- Decorative 5×5 "matrix" motif, echoing the board's display. -->
+      <div
+        class="pointer-events-none absolute right-8 top-1/2 hidden -translate-y-1/2 grid-cols-5 gap-1.5 opacity-40 lg:grid"
+        aria-hidden="true"
+      >
+        {
+          Array.from({ length: 25 }, (_, i) => (
+            <span
+              class:list={[
+                'h-3 w-3 rounded-[2px]',
+                [1, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 22].includes(i)
+                  ? 'bg-white'
+                  : 'bg-white/20',
+              ]}
+            />
+          ))
+        }
+      </div>
+      <h2 id="cta-title" class="relative text-[1.75rem] font-extrabold leading-tight tracking-tight sm:text-4xl">
         <T en="Your next idea is waiting" bn="তোমার পরের আইডিয়াটা অপেক্ষায়" />
       </h2>
-      <p class="mx-auto mt-3 max-w-xl text-brand-100">
+      <p class="relative mx-auto mt-3 max-w-xl text-base leading-relaxed text-brand-100 sm:text-lg">
         <T
           en="Reserve a board from the first production run and start making. No payment until we confirm your ship date."
           bn="প্রথম ব্যাচ থেকে একটা বোর্ড রিজার্ভ করে বানানো শুরু করে দাও। ডেলিভারির তারিখ কনফার্ম হওয়ার আগে কোনো টাকা দিতে হবে না।"
         />
       </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+      <div class="relative mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
         <a
-          href="/shop"
-          class="inline-block rounded-md bg-white px-7 py-3 font-semibold text-brand-700 transition hover:bg-brand-50"
+          href="/products/bitsflow-board"
+          data-track="cta_prebook"
+          class="btn btn-lg bg-white text-brand-700 shadow-lg shadow-black/10 hover:-translate-y-0.5 hover:bg-brand-50 motion-reduce:hover:translate-y-0"
         >
           <T en="Pre-book now" bn="এখনই প্রি-বুক করো" /> — {formatBDT(launchPrice)}
         </a>
         <a
           href="/specs"
-          class="inline-block rounded-md border border-white/40 px-7 py-3 font-semibold text-white transition hover:bg-white/10"
+          data-track="cta_view_specs"
+          class="btn btn-lg border border-white/40 text-white hover:bg-white/10"
         >
           <T en="View specs" bn="স্পেক দেখো" />
         </a>

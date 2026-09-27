@@ -12,6 +12,11 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://bitsflow.cc',
   output: 'static',
+  // The single-product /shop page is now the multi-product storefront at
+  // /products; keep the old path working for bookmarks and payment return URLs.
+  redirects: {
+    '/shop': '/products',
+  },
   integrations: [react(), mdx(), sitemap()],
   vite: {
     plugins: [tailwindcss()],

@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import T from '../../components/T.astro';
+import Flag from '../../components/Flag.astro';
+import ProductGrid from '../../components/react/ProductGrid.tsx';
+import { CalendarCheck, ShieldCheck } from 'lucide-astro';
+import { getAllProducts } from '../../lib/catalog';
+
+// Seed catalog is server-rendered for SEO/first paint; the island then loads
+// the live catalog from Firestore (admin-managed) and applies ?category=&q=&sort=.
+const initialProducts = getAllProducts();
+---
+
+<BaseLayout
+  title="Shop boards, kits & accessories — Bitsflow"
+  description="Shop the Bitsflow learning board, starter and robotics kits, sensors and accessories. Pre-book or buy, with delivery across Bangladesh."
+>
+  <!-- Header -->
+  <section class="relative overflow-hidden border-b border-black/5">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(rgb(0_106_78/0.12)_1px,transparent_1.5px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+      aria-hidden="true"
+    >
+    </div>
+    <header class="container-page mx-auto max-w-2xl py-14 text-center lg:py-16">
+      <p class="text-sm font-semibold uppercase tracking-wide text-brand-600">
+        <T en="Bitsflow shop" bn="বিটসফ্লো শপ" />
+      </p>
+      <h1 class="mt-2 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+        <T en="Find your next build" bn="তোমার পরের প্রজেক্টের সবকিছু" />
+      </h1>
+      <p class="mt-4 text-lg text-ink-soft">
+        <T
+          en="Boards, kits and accessories for curious makers — pick a category, search, or just browse."
+          bn="কৌতূহলী মেকারদের জন্য বোর্ড, কিট আর এক্সেসরিজ — ক্যাটাগরি বেছে নাও, খুঁজে দেখো, নয়তো এমনিই ঘুরে দেখো।"
+        />
+      </p>
+      <ul
+        class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink-soft"
+      >
+        <li class="inline-flex items-center gap-1.5">
+          <Flag size={16} />
+          <T en="Delivery across Bangladesh" bn="সারা দেশে ডেলিভারি" />
+        </li>
+        <li class="inline-flex items-center gap-1.5">
+          <CalendarCheck size={16} class="text-brand-600" />
+          <T en="Reserve with no payment" bn="টাকা ছাড়াই রিজার্ভ করো" />
+        </li>
+        <li class="inline-flex items-center gap-1.5">
+          <ShieldCheck size={16} class="text-brand-600" />
+          <T en="1-year warranty" bn="১ বছরের ওয়ারেন্টি" />
+        </li>
+      </ul>
+    </header>
+  </section>
+
+  <section class="container-page pb-20">
+    <ProductGrid client:load mode="all" initialProducts={initialProducts} />
+  </section>
+</BaseLayout>

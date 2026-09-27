@@ -10,6 +10,8 @@ import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
 import {
   getFirestore,
   connectFirestoreEmulator,
+  disableNetwork,
+  enableNetwork,
   type Firestore,
 } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator, type FirebaseStorage } from 'firebase/storage';
@@ -50,8 +52,27 @@ export function db(): Firestore {
   if (!_db) {
     _db = getFirestore(app());
     if (useEmulators && !_emulatorsConnected) connectEmulators();
+    releaseConnectionsWhenHidden(_db);
   }
   return _db;
+}
+
+/**
+ * Back/forward-cache hygiene. Storefront pages keep a Firestore stream open;
+ * when the browser parks a page in the bfcache that stream can stay open, and
+ * over HTTP/1.1 (the local emulator, some proxies) a handful of parked pages
+ * exhaust the ~6-connections-per-host limit — the next page's queries then time
+ * out and Firestore silently goes "offline". Release the network when the page
+ * is hidden and resume it if the page is restored from the cache.
+ */
+function releaseConnectionsWhenHidden(firestore: Firestore) {
+  if (typeof window === 'undefined') return;
+  window.addEventListener('pagehide', () => {
+    disableNetwork(firestore).catch(() => {});
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) enableNetwork(firestore).catch(() => {});
+  });
 }
 
 export function storage(): FirebaseStorage {

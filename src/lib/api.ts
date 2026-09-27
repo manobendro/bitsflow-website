@@ -46,6 +46,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 import type { CustomerInfo, Order, OrderStatus, OrderType, ShippingAddress } from './types';
+import type { CatalogProduct } from './catalog';
 
 export interface CreateOrderInput {
   productId: string;
@@ -93,4 +94,63 @@ export function adminUpdateOrder(
     method: 'PATCH',
     body: JSON.stringify(patch),
   });
+}
+
+// --- admin: products (live catalog in Firestore `products`) ---
+//
+// Contract (implemented in functions/src/products.ts):
+//   GET    /admin/products          → { products: CatalogProduct[] }  (all, incl. inactive)
+//   POST   /admin/products          → { ok: true, id }                (409 if id/slug taken)
+//   PATCH  /admin/products/:id      → { ok: true }                    (id & slug immutable)
+//   DELETE /admin/products/:id      → { ok: true }
+//   POST   /admin/products/seed     → { ok: true, seeded, skipped }   (creates missing ids only)
+// Errors: non-2xx with { error: string } — surfaced as Error.message.
+
+/** Writable product fields (server stamps createdAt/updatedAt). */
+export type ProductInput = Omit<CatalogProduct, 'createdAt' | 'updatedAt' | 'currency'> & {
+  currency?: 'BDT';
+};
+
+export function adminListProducts() {
+  return request<{ products: CatalogProduct[] }>('/admin/products');
+}
+
+export function adminCreateProduct(product: ProductInput) {
+  return request<{ ok: boolean; id: string }>('/admin/products', {
+    method: 'POST',
+    body: JSON.stringify(product),
+  });
+}
+
+/**
+ * Partial update. Send `null` (or '') to CLEAR an optional field —
+ * compareAtPrice, image, descriptionEn, descriptionBn. id/slug are immutable.
+ */
+export type ProductPatch = Partial<
+  Omit<ProductInput, 'compareAtPrice' | 'image' | 'descriptionEn' | 'descriptionBn'>
+> & {
+  compareAtPrice?: number | null;
+  image?: string | null;
+  descriptionEn?: string | null;
+  descriptionBn?: string | null;
+};
+
+export function adminUpdateProduct(id: string, patch: ProductPatch) {
+  return request<{ ok: boolean }>(`/admin/products/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}
+
+export function adminDeleteProduct(id: string) {
+  return request<{ ok: boolean }>(`/admin/products/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function adminSeedProducts(products: ProductInput[]) {
+  return request<{ ok: boolean; seeded: number; skipped: number }>(
+    '/admin/products/seed',
+    { method: 'POST', body: JSON.stringify({ products }) }
+  );
 }

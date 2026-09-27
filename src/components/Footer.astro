@@ -1,5 +1,5 @@
 ---
-import { Hexagon } from 'lucide-astro';
+import { Hexagon, ArrowRight, ArrowUp } from 'lucide-astro';
 import T from './T.astro';
 import Flag from './Flag.astro';
 const year = new Date().getFullYear();
@@ -8,10 +8,10 @@ const cols = [
     title: 'Product',
     titleBn: 'প্রোডাক্ট',
     links: [
+      { href: '/products', en: 'Shop all', bn: 'সব পণ্য' },
+      { href: '/products/bitsflow-board', en: 'Pre-book', bn: 'প্রি-বুক' },
       { href: '/#why', en: 'Why Bitsflow', bn: 'কেন বিটসফ্লো' },
-      { href: '/#create', en: 'What you can build', bn: 'কী বানাতে পারো' },
       { href: '/specs', en: 'Specs', bn: 'স্পেক' },
-      { href: '/shop#prebook', en: 'Pre-book', bn: 'প্রি-বুক' },
     ],
   },
   {
@@ -20,6 +20,7 @@ const cols = [
     links: [
       { href: '/blog', en: 'Blog', bn: 'ব্লগ' },
       { href: '/blog', en: 'Tutorials', bn: 'টিউটোরিয়াল' },
+      { href: '/#create', en: 'Project ideas', bn: 'প্রজেক্ট আইডিয়া' },
       { href: '/#faq', en: 'FAQ', bn: 'সাধারণ প্রশ্ন' },
     ],
   },
@@ -35,50 +36,69 @@ const cols = [
 ];
 ---
 
-<footer class="border-t border-black/5 bg-sand">
-  <div class="container-page grid gap-10 py-12 sm:grid-cols-2 md:grid-cols-4">
-    <div>
-      <div class="flex items-center gap-2 font-extrabold">
-        <span
-          class="grid h-8 w-8 place-items-center rounded-md bg-brand-600 text-white"
-          aria-hidden="true"
+<footer class="mt-auto border-t border-black/5 bg-sand">
+  <div class="container-page py-12 sm:py-14">
+    <div class="grid gap-10 lg:grid-cols-12 lg:gap-8">
+      <!-- Brand + short pitch + primary CTA -->
+      <div class="lg:col-span-5">
+        <a href="/" class="inline-flex items-center gap-2.5 rounded-md text-lg font-extrabold text-ink">
+          <span
+            class="grid h-9 w-9 place-items-center rounded-md bg-brand-600 text-white"
+            aria-hidden="true"
+          >
+            <Hexagon size={18} stroke-width={2.5} />
+          </span>
+          Bitsflow
+        </a>
+        <p class="mt-4 max-w-sm text-[15px] leading-relaxed text-ink-soft">
+          <T
+            en="The pocket-sized learning board for the next generation of makers."
+            bn="পরের প্রজন্মের মেকারদের জন্য পকেট সাইজের লার্নিং বোর্ড।"
+          />
+        </p>
+        <a
+          href="/products/bitsflow-board"
+          data-track="footer_prebook"
+          class="btn btn-secondary mt-6 w-full sm:w-auto"
         >
-          <Hexagon size={18} strokeWidth={2.5} />
-        </span>
-        Bitsflow
+          <T en="Pre-book your board" bn="তোমার বোর্ড প্রি-বুক করো" />
+          <ArrowRight size={16} aria-hidden="true" />
+        </a>
       </div>
-      <p class="mt-3 max-w-xs text-sm text-ink-soft">
-        <T
-          en="The pocket-sized learning board for the next generation of makers."
-          bn="পরের প্রজন্মের মেকারদের জন্য পকেট সাইজের লার্নিং বোর্ড।"
-        />
-      </p>
+
+      <!-- Link columns: 2-up on phones, 3-up from sm -->
+      <nav
+        aria-label="Footer"
+        class="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:col-span-7"
+      >
+        {
+          cols.map((c) => (
+            <div>
+              <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-ink">
+                <T en={c.title} bn={c.titleBn} />
+              </h2>
+              <ul class="mt-3 space-y-0.5">
+                {c.links.map((l) => (
+                  <li>
+                    <a
+                      href={l.href}
+                      class="-mx-1 inline-flex min-h-9 items-center rounded-md px-1 text-[15px] text-ink-soft transition-colors hover:text-brand-700"
+                    >
+                      <T en={l.en} bn={l.bn} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
     </div>
-    {
-      cols.map((c) => (
-        <div>
-          <h3 class="text-sm font-semibold text-ink">
-            <T en={c.title} bn={c.titleBn} />
-          </h3>
-          <ul class="mt-3 space-y-2">
-            {c.links.map((l) => (
-              <li>
-                <a
-                  href={l.href}
-                  class="text-sm text-ink-soft transition hover:text-brand-700"
-                >
-                  <T en={l.en} bn={l.bn} />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))
-    }
   </div>
+
   <div class="border-t border-black/5">
     <div
-      class="container-page flex flex-col items-center justify-between gap-2 py-5 text-sm text-ink-soft sm:flex-row"
+      class="container-page flex flex-col-reverse items-start justify-between gap-3 py-5 text-sm text-ink-soft sm:flex-row sm:items-center"
     >
       <p>
         <T
@@ -86,10 +106,19 @@ const cols = [
           bn={`© ${year} বিটসফ্লো। সর্বস্বত্ব সংরক্ষিত।`}
         />
       </p>
-      <p class="flex items-center gap-1.5">
-        <T en="Made for makers in Bangladesh" bn="বাংলাদেশের মেকারদের জন্য বানানো" />
-        <Flag size={16} />
-      </p>
+      <div class="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end">
+        <p class="flex items-center gap-2">
+          <Flag size={18} />
+          <T en="Made for makers in Bangladesh" bn="বাংলাদেশের মেকারদের জন্য বানানো" />
+        </p>
+        <a
+          href="#main"
+          class="inline-flex h-9 items-center gap-1.5 rounded-md px-2 font-medium text-ink-soft transition-colors hover:bg-paper hover:text-brand-700"
+        >
+          <ArrowUp size={15} aria-hidden="true" />
+          <T en="Top" bn="উপরে" />
+        </a>
+      </div>
     </div>
   </div>
 </footer>

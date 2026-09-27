@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdminNav from '../../components/react/AdminNav.tsx';
+import AdminProducts from '../../components/react/AdminProducts.tsx';
+---
+
+<BaseLayout title="Products admin — Bitsflow" description="Manage the Bitsflow product catalog.">
+  <section class="container-page py-12 lg:py-16">
+    <AdminNav active="products" />
+    <div class="mt-8">
+      <AdminProducts client:only="react" />
+    </div>
+  </section>
+</BaseLayout>

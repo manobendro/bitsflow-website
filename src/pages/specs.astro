@@ -14,14 +14,25 @@ import {
   ArrowLeft,
   Package,
   Info,
+  ArrowRight,
+  Bluetooth,
+  Usb,
 } from 'lucide-astro';
 
 const launchPrice = 4500; // keep in sync with shop/home
 
+// Four headline facts shown above the detailed tables.
+const glance = [
+  { Icon: LayoutGrid, en: '5×5 RGB matrix', bn: '৫×৫ RGB ম্যাট্রিক্স', subEn: '25 full-color LEDs', subBn: '২৫টা রঙিন LED' },
+  { Icon: Bluetooth, en: 'BLE + Wi-Fi', bn: 'BLE + Wi-Fi', subEn: 'Wireless built in', subBn: 'ওয়্যারলেস ভেতরেই' },
+  { Icon: Compass, en: 'Motion & more', bn: 'মোশন ও আরও', subEn: 'Sensors on board', subBn: 'বোর্ডেই সেন্সর' },
+  { Icon: Usb, en: 'USB-C', bn: 'USB-C', subEn: 'Power + programming', subBn: 'পাওয়ার + প্রোগ্রামিং' },
+];
+
 // Grouped technical specifications. Edit freely as hardware is finalized.
 // Each row is [label EN, label BN, value EN, value BN]. Universal technical
 // tokens (protocol names, USB-C, etc.) are intentionally left identical.
-const specGroups = [
+const specGroupsRaw = [
   {
     title: 'Display',
     titleBn: 'ডিসপ্লে',
@@ -147,6 +158,12 @@ const specGroups = [
   },
 ];
 
+// Stable anchor ids for the jump links (e.g. #spec-wireless).
+const specGroups = specGroupsRaw.map((g) => ({
+  ...g,
+  id: `spec-${g.title.toLowerCase().replace(/[^a-z]+/g, '-').replace(/-+$/, '')}`,
+}));
+
 const inBox = [
   { en: 'Bitsflow board', bn: 'বিটসফ্লো বোর্ড' },
   { en: 'USB-C cable', bn: 'USB-C কেবল' },
@@ -170,112 +187,155 @@ const inBox = [
       aria-hidden="true"
     >
     </div>
-    <div class="container-page py-14 lg:py-20">
+    <div class="container-page pb-12 pt-8 sm:pb-16 sm:pt-12 lg:pb-20">
       <a
         href="/"
-        class="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+        class="-ml-1 inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-sm font-medium text-brand-700 hover:underline"
       >
-        <ArrowLeft size={14} /> <T en="Back to home" bn="হোমে ফিরে যাও" />
+        <ArrowLeft size={14} aria-hidden="true" /> <T en="Back to home" bn="হোমে ফিরে যাও" />
       </a>
-      <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-        <T en="Tech specs" bn="টেক স্পেক" />
-      </h1>
-      <p class="mt-4 max-w-2xl text-lg text-ink-soft">
-        <T
-          en="For the makers, teachers and tinkerers who want the details. Here’s everything packed into the Bitsflow board."
-          bn="যেসব মেকার, শিক্ষক আর শখের কারিগর খুঁটিনাটি জানতে চায়, তাদের জন্য। বিটসফ্লো বোর্ডে যা যা আছে, সবটাই এখানে।"
-        />
-      </p>
-      <div class="mt-8 flex flex-wrap gap-4">
-        <a
-          href="/shop"
-          class="rounded-md bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 hover:bg-brand-700"
-        >
-          <T en="Pre-book" bn="প্রি-বুক" /> — {formatBDT(launchPrice)}
-        </a>
-        <a
-          href="/#create"
-          class="rounded-md border border-brand-200 bg-white px-6 py-3.5 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50"
-        >
-          <T en="What you can build" bn="কী কী বানানো যায়" />
-        </a>
+      <div class="mt-4 grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-end">
+        <div>
+          <p class="eyebrow">
+            <T en="Bitsflow board" bn="বিটসফ্লো বোর্ড" />
+          </p>
+          <h1 class="mt-2 text-4xl font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl">
+            <T en="Tech specs" bn="টেক স্পেক" />
+          </h1>
+          <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
+            <T
+              en="For the makers, teachers and tinkerers who want the details. Here’s everything packed into the Bitsflow board."
+              bn="যেসব মেকার, শিক্ষক আর শখের কারিগর খুঁটিনাটি জানতে চায়, তাদের জন্য। বিটসফ্লো বোর্ডে যা যা আছে, সবটাই এখানে।"
+            />
+          </p>
+          <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <a href="/products/bitsflow-board" class="btn btn-primary btn-lg">
+              <T en="Pre-book" bn="প্রি-বুক" /> — {formatBDT(launchPrice)}
+              <ArrowRight size={18} aria-hidden="true" />
+            </a>
+            <a href="/#create" class="btn btn-secondary btn-lg">
+              <T en="What you can build" bn="কী কী বানানো যায়" />
+            </a>
+          </div>
+        </div>
+
+        <!-- At a glance -->
+        <ul class="grid grid-cols-2 gap-3 sm:gap-4">
+          {
+            glance.map((g) => (
+              <li class="card-static flex items-start gap-3 p-4 sm:p-5">
+                <span class="icon-tile h-10 w-10 shrink-0">
+                  <g.Icon size={20} stroke-width={1.75} />
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-[15px] font-bold leading-snug text-ink">
+                    <T en={g.en} bn={g.bn} />
+                  </span>
+                  <span class="mt-0.5 block text-[13px] leading-snug text-ink-soft">
+                    <T en={g.subEn} bn={g.subBn} />
+                  </span>
+                </span>
+              </li>
+            ))
+          }
+        </ul>
       </div>
     </div>
   </section>
 
   <!-- Spec groups -->
-  <section class="bg-sand">
-    <div class="container-page py-14 lg:py-20">
-    <div class="grid gap-6 md:grid-cols-2">
-      {
-        specGroups.map((g) => (
-          <div class="card-soft p-6">
-            <div class="flex items-center gap-3">
-              <span class="icon-tile h-11 w-11">
-                <g.Icon size={22} strokeWidth={1.75} />
-              </span>
-              <h2 class="text-lg font-bold">
-                <T en={g.title} bn={g.titleBn} />
-              </h2>
-            </div>
-            <dl class="mt-4 divide-y divide-black/5">
-              {g.rows.map(([k, kBn, v, vBn]) => (
-                <div class="grid grid-cols-3 gap-3 py-3">
-                  <dt class="col-span-1 text-sm font-semibold text-ink-soft">
-                    <T en={k} bn={kBn} />
-                  </dt>
-                  <dd class="col-span-2 text-[15px] text-ink">
-                    <T en={v} bn={vBn} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))
-      }
-    </div>
-
-    <!-- In the box + note -->
-    <div class="mt-10 grid gap-6 lg:grid-cols-2">
-      <div class="card-soft p-6">
-        <h2 class="text-lg font-bold">
-          <T en="What’s in the box" bn="বক্সে যা যা আছে" />
-        </h2>
-        <ul class="mt-4 grid grid-cols-2 gap-2 text-[15px] text-ink-soft">
-          {inBox.map((i) => (
-            <li class="flex items-center gap-2">
-              <Package size={15} class="shrink-0 text-brand-500" />
-              <T en={i.en} bn={i.bn} />
-            </li>
-          ))}
+  <section class="bg-sand" aria-label="Specifications">
+    <div class="container-page py-12 sm:py-16 lg:py-20">
+      <!-- Jump links: scroll horizontally on phones, wrap on larger screens. -->
+      <nav aria-label="Spec sections" class="-mx-5 overflow-x-auto px-5 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+        <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+          {
+            specGroups.map((g) => (
+              <li>
+                <a
+                  href={`#${g.id}`}
+                  class="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md border border-black/10 bg-white px-3 text-sm font-medium text-ink-soft transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                >
+                  <g.Icon size={15} aria-hidden="true" />
+                  <T en={g.title} bn={g.titleBn} />
+                </a>
+              </li>
+            ))
+          }
         </ul>
-      </div>
-      <div class="rounded-lg border-l-4 border-amber-400 border-y border-r border-amber-200 bg-amber-50 p-6">
-        <h2 class="flex items-center gap-2 text-lg font-bold text-amber-800">
-          <Info size={18} /> <T en="A note on compatibility" bn="কম্প্যাটিবিলিটি নিয়ে একটা কথা" />
-        </h2>
-        <p class="mt-2 text-[15px] leading-relaxed text-amber-900/80">
-          <T
-            en="Bitsflow is inspired by the BBC micro:bit’s approach to learning, but it is its own board. It is not a micro:bit and is not compatible with micro:bit add-ons, kits or pin layout — Bitsflow has its own GPIO header and accessory ecosystem."
-            bn="বিটসফ্লো BBC micro:bit-এর শেখানোর ধরন থেকে অনুপ্রেরণা নেওয়া, তবে এটা সম্পূর্ণ নিজস্ব একটা বোর্ড। এটা micro:bit নয়, আর micro:bit-এর অ্যাড-অন, কিট বা পিন লেআউটের সাথেও চলে না — বিটসফ্লোর নিজস্ব GPIO হেডার আর অ্যাক্সেসরি ইকোসিস্টেম আছে।"
-          />
-        </p>
-      </div>
-    </div>
+      </nav>
 
-    <p class="mt-8 text-center text-sm text-ink-soft/70">
-      <T
-        en="Specifications are preliminary and may change before the final production run."
-        bn="স্পেসিফিকেশন এখনো প্রাথমিক, চূড়ান্ত প্রোডাকশনের আগে বদলাতে পারে।"
-      />
-    </p>
+      <div class="mt-8 grid gap-4 sm:gap-6 md:grid-cols-2">
+        {
+          specGroups.map((g) => (
+            <article id={g.id} class="card-static p-5 sm:p-6">
+              <div class="flex items-center gap-3">
+                <span class="icon-tile h-11 w-11">
+                  <g.Icon size={22} stroke-width={1.75} />
+                </span>
+                <h2 class="text-lg font-bold">
+                  <T en={g.title} bn={g.titleBn} />
+                </h2>
+              </div>
+              <dl class="mt-4 divide-y divide-black/5">
+                {g.rows.map(([k, kBn, v, vBn]) => (
+                  <div class="grid gap-1 py-3 sm:grid-cols-[8.5rem_1fr] sm:gap-4">
+                    <dt class="text-[13px] font-semibold text-ink-soft sm:text-sm">
+                      <T en={k} bn={kBn} />
+                    </dt>
+                    <dd class="text-[15px] leading-relaxed text-ink">
+                      <T en={v} bn={vBn} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          ))
+        }
+      </div>
+
+      <!-- In the box + note -->
+      <div class="mt-6 grid gap-4 sm:gap-6 lg:mt-10 lg:grid-cols-2">
+        <div class="card-static p-5 sm:p-6">
+          <h2 class="flex items-center gap-2 text-lg font-bold">
+            <Package size={20} class="text-brand-600" aria-hidden="true" />
+            <T en="What’s in the box" bn="বক্সে যা যা আছে" />
+          </h2>
+          <ul class="mt-4 grid gap-2.5 text-[15px] text-ink sm:grid-cols-2">
+            {inBox.map((i) => (
+              <li class="flex items-center gap-2.5 rounded-md bg-sand/70 px-3 py-2.5">
+                <span class="h-2 w-2 shrink-0 rounded-[1px] bg-brand-500" aria-hidden="true" />
+                <T en={i.en} bn={i.bn} />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="rounded-lg border border-amber-200 border-l-4 border-l-amber-400 bg-amber-50 p-5 sm:p-6">
+          <h2 class="flex items-center gap-2 text-lg font-bold text-amber-800">
+            <Info size={18} aria-hidden="true" /> <T en="A note on compatibility" bn="কম্প্যাটিবিলিটি নিয়ে একটা কথা" />
+          </h2>
+          <p class="mt-2 text-[15px] leading-relaxed text-amber-900/80">
+            <T
+              en="Bitsflow is inspired by the BBC micro:bit’s approach to learning, but it is its own board. It is not a micro:bit and is not compatible with micro:bit add-ons, kits or pin layout — Bitsflow has its own GPIO header and accessory ecosystem."
+              bn="বিটসফ্লো BBC micro:bit-এর শেখানোর ধরন থেকে অনুপ্রেরণা নেওয়া, তবে এটা সম্পূর্ণ নিজস্ব একটা বোর্ড। এটা micro:bit নয়, আর micro:bit-এর অ্যাড-অন, কিট বা পিন লেআউটের সাথেও চলে না — বিটসফ্লোর নিজস্ব GPIO হেডার আর অ্যাক্সেসরি ইকোসিস্টেম আছে।"
+            />
+          </p>
+        </div>
+      </div>
+
+      <p class="mt-8 text-center text-sm text-ink-soft">
+        <T
+          en="Specifications are preliminary and may change before the final production run."
+          bn="স্পেসিফিকেশন এখনো প্রাথমিক, চূড়ান্ত প্রোডাকশনের আগে বদলাতে পারে।"
+        />
+      </p>
     </div>
   </section>
 
   <!-- CTA -->
-  <section class="container-page py-16 lg:py-20">
+  <section class="container-page py-14 sm:py-20">
     <div
-      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-8 py-12 text-center text-white"
+      class="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-6 py-12 text-center text-white sm:px-12"
     >
       <div
         class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
@@ -290,12 +350,24 @@ const inBox = [
       <h2 class="relative text-2xl font-extrabold tracking-tight sm:text-3xl">
         <T en="Ready to build with it?" bn="বানাতে শুরু করতে তৈরি?" />
       </h2>
-      <a
-        href="/shop"
-        class="relative mt-6 inline-block rounded-md bg-white px-7 py-3 font-semibold text-brand-700 transition hover:-translate-y-0.5 hover:bg-brand-50"
-      >
-        <T en="Pre-book now" bn="এখনই প্রি-বুক করো" />
-      </a>
+      <p class="relative mx-auto mt-3 max-w-lg text-base leading-relaxed text-brand-100">
+        <T
+          en="Reserve a board from the first production run — no payment until we confirm your ship date."
+          bn="প্রথম ব্যাচ থেকে একটা বোর্ড রিজার্ভ করে রাখো — ডেলিভারির তারিখ কনফার্ম হওয়ার আগে কোনো টাকা লাগবে না।"
+        />
+      </p>
+      <div class="relative mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+        <a
+          href="/products/bitsflow-board"
+          class="btn btn-lg bg-white text-brand-700 shadow-lg shadow-black/10 hover:-translate-y-0.5 hover:bg-brand-50 motion-reduce:hover:translate-y-0"
+        >
+          <T en="Pre-book now" bn="এখনই প্রি-বুক করো" />
+          <ArrowRight size={18} aria-hidden="true" />
+        </a>
+        <a href="/products" class="btn btn-lg border border-white/40 text-white hover:bg-white/10">
+          <T en="Browse the shop" bn="দোকান ঘুরে দেখো" />
+        </a>
+      </div>
     </div>
   </section>
 </BaseLayout>
